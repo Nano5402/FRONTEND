@@ -15,32 +15,16 @@
 // 1. SELECCIÓN DE ELEMENTOS DEL DOM
 // ============================================
 
-// Formulario
 const messageForm = document.getElementById('messageForm');
-
-// Campos de entrada
 const userNameInput = document.getElementById('userName');
 const userMessageInput = document.getElementById('userMessage');
-
-// Botón de envío
 const submitBtn = document.getElementById('submitBtn');
-
-// Elementos para mostrar errores
 const userNameError = document.getElementById('userNameError');
 const userMessageError = document.getElementById('userMessageError');
-
-// Contenedor donde se mostrarán los mensajes
 const messagesContainer = document.getElementById('messagesContainer');
-
-// Estado vacío
 const emptyState = document.getElementById('emptyState');
-
-// Contador de mensajes
 const messageCount = document.getElementById('messageCount');
-
-// Variable para llevar el conteo de mensajes
 let totalMessages = 0;
-
 
 // ============================================
 // 2. FUNCIONES AUXILIARES
@@ -84,7 +68,6 @@ function validateForm() {
     return isValid;
 }
 
-
 // ============================================
 // 3. CREACIÓN DE ELEMENTOS
 // ============================================
@@ -112,10 +95,68 @@ function createUserCard(usuario, tareas) {
 
     const crearTareaBtn = document.getElementById("crearTareaBtn");
     crearTareaBtn.addEventListener("click", () => {
-        // La lógica de creación de tareas se implementará en el siguiente commit
+        renderTaskForm(usuario);
     });
 }
 
+/**
+ * Renderiza un formulario dinámico para crear una nueva tarea
+ * @param {Object} usuario - Datos del usuario
+ */
+function renderTaskForm(usuario) {
+    const form = document.createElement("form");
+    form.classList.add("form");
+
+    form.innerHTML = `
+        <div class="form__group">
+            <label for="taskTitle" class="form__label">Título de la tarea</label>
+            <input type="text" id="taskTitle" class="form__input" placeholder="Ingresa el título">
+        </div>
+        <div class="form__group">
+            <label for="taskBody" class="form__label">Descripción</label>
+            <textarea id="taskBody" class="form__input form__textarea" placeholder="Ingresa la descripción"></textarea>
+        </div>
+        <button type="submit" class="btn btn--primary">Guardar tarea</button>
+    `;
+
+    resultadoUsuario.appendChild(form);
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const title = document.getElementById("taskTitle").value.trim();
+        const body = document.getElementById("taskBody").value.trim();
+
+        if (!title || !body) {
+            alert("Todos los campos son obligatorios");
+            return;
+        }
+
+        try {
+            await fetch("http://localhost:3000/tasks", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    userId: usuario.id,
+                    title,
+                    body,
+                    status: "pendiente"
+                })
+            });
+
+            // Volver a consultar tareas y actualizar la card
+            const responseTasks = await fetch(`http://localhost:3000/tasks?userId=${usuario.id}`);
+            const tareas = await responseTasks.json();
+            createUserCard(usuario, tareas);
+
+        } catch (error) {
+            resultadoUsuario.innerHTML += `
+                <div class="error-card">
+                    <p>Error al crear la tarea.</p>
+                </div>
+            `;
+        }
+    });
+}
 
 // ============================================
 // 4. MANEJO DE EVENTOS
@@ -159,16 +200,13 @@ async function handleFormSubmit(event) {
     }
 }
 
-
 // ============================================
 // 5. REGISTRO DE EVENTOS
 // ============================================
 
 messageForm.addEventListener('submit', handleFormSubmit);
-
 userNameInput.addEventListener('input', () => clearError(userNameError));
 userMessageInput.addEventListener('input', () => clearError(userMessageError));
-
 
 // ============================================
 // 7. INICIALIZACIÓN (OPCIONAL)
