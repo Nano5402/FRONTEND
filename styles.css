@@ -590,6 +590,7 @@ body {
   background-color: var(--color-error);     /* rojo para indicar acción de eliminar */
   border-color: var(--color-error);
   transform: scale(1.05);                  
+<<<<<<< HEAD
 }
 
 /* ============================================
@@ -669,4 +670,6 @@ body {
 .message-error {
     background-color: #ef4444;
     color: white;
+=======
+>>>>>>> 4281e87 (realizo algunos cambios y mejoras al codigo como el boton de eliminar con su funcionalidad)
 }

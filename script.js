@@ -118,14 +118,8 @@ function createUserCard(usuario, tareas) {
             deleteBtn.classList.add("btn", "btn--danger");
             deleteBtn.textContent = "Eliminar";
 
-            // DESHABILITAR BOTÓN MIENTRAS SE ELIMINA LA TAREA
-            deleteBtn.addEventListener("click", async () => {
-        deleteBtn.disabled = true;
-    deleteBtn.textContent = "Eliminando...";
-    deleteBtn.style.opacity = "0.5";
-    deleteBtn.style.cursor = "not-allowed";
-    await deleteTask(t.id, usuario.id);
-});
+            // Enganchar evento correctamente
+            deleteBtn.addEventListener("click", () => deleteTask(t.id, usuario.id));
 
             taskItem.appendChild(taskText);
             taskItem.appendChild(deleteBtn);
@@ -208,13 +202,8 @@ function renderTaskForm(usuario) {
  * @param {number} userId - ID del usuario
  */
 async function deleteTask(taskId, userId) {
-    const confirmar = confirm('¿Estás seguro de que deseas eliminar esta tarea?');
-    if (!confirmar) {
-        return; // Sale sin hacer nada
-    }
     try {
         await fetch(`http://localhost:3000/tasks/${taskId}`, { method: "DELETE" });
-        mostrarMensaje('✅ Tarea eliminada exitosamente', 'success');
 
         const responseTasks = await fetch(`http://localhost:3000/tasks?userId=${userId}`);
         const tareas = await responseTasks.json();
