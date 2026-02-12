@@ -15,11 +15,6 @@
 // 1. SELECCIÓN DE ELEMENTOS DEL DOM
 // ============================================
 
-/**
- * Seleccionamos los elementos del DOM que necesitamos manipular.
- * Usamos getElementById para obtener referencias a los elementos únicos.
- */
-
 // Formulario
 const messageForm = document.getElementById('messageForm');
 
@@ -37,7 +32,7 @@ const userMessageError = document.getElementById('userMessageError');
 // Contenedor donde se mostrarán los mensajes
 const messagesContainer = document.getElementById('messagesContainer');
 
-// Estado vacío (mensaje que se muestra cuando no hay mensajes)
+// Estado vacío
 const emptyState = document.getElementById('emptyState');
 
 // Contador de mensajes
@@ -91,32 +86,57 @@ function validateForm() {
 
 
 // ============================================
+// 3. CREACIÓN DE ELEMENTOS
+// ============================================
+
+function createUserCard(usuario, tareas) {
+    const total = tareas.length;
+    const pendientes = tareas.filter(t => t.status === "pendiente").length;
+    const completadas = tareas.filter(t => t.status === "completada").length;
+
+    const card = document.createElement("div");
+    card.classList.add("user-card");
+
+    card.innerHTML = `
+        <h3>${usuario.name}</h3>
+        <p><strong>Documento:</strong> ${usuario.document}</p>
+        <p><strong>Correo:</strong> ${usuario.email}</p>
+        <p><strong>Total tareas:</strong> ${total}</p>
+        <p><strong>Pendientes:</strong> ${pendientes}</p>
+        <p><strong>Completadas:</strong> ${completadas}</p>
+        <button class="btn btn--secondary" id="crearTareaBtn">Crear tarea</button>
+    `;
+
+    resultadoUsuario.innerHTML = "";
+    resultadoUsuario.appendChild(card);
+
+    const crearTareaBtn = document.getElementById("crearTareaBtn");
+    crearTareaBtn.addEventListener("click", () => {
+        // La lógica de creación de tareas se implementará en el siguiente commit
+    });
+}
+
+
+// ============================================
 // 4. MANEJO DE EVENTOS
 // ============================================
 
-/**
- * Maneja el evento de envío del formulario
- * @param {Event} event - Evento del formulario
- */
 async function handleFormSubmit(event) {
     event.preventDefault();
 
-    // Validar formulario
     if (!validateForm()) {
         return;
     }
 
-    // Obtener valores
     const userName = userNameInput.value.trim();
     const userMessage = userMessageInput.value.trim();
 
     try {
-        // Buscar usuario en db.json
         const response = await fetch(`http://localhost:3000/users?name=${userName}`);
         const usuarios = await response.json();
 
         if (usuarios.length === 0) {
-            messagesContainer.innerHTML = `
+            resultadoUsuario.innerHTML = `
                 <div class="error-card">
                     <p>No se encontró ningún usuario con el nombre "${userName}".</p>
                 </div>
@@ -124,12 +144,14 @@ async function handleFormSubmit(event) {
             return;
         }
 
-        // Si existe el usuario, por ahora solo mostramos un log
-        console.log("Usuario encontrado:", usuarios[0]);
-        console.log("Mensaje ingresado:", userMessage);
+        const usuario = usuarios[0];
+        const responseTasks = await fetch(`http://localhost:3000/tasks?userId=${usuario.id}`);
+        const tareas = await responseTasks.json();
+
+        createUserCard(usuario, tareas);
 
     } catch (error) {
-        messagesContainer.innerHTML = `
+        resultadoUsuario.innerHTML = `
             <div class="error-card">
                 <p>Error al consultar el servidor.</p>
             </div>
