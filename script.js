@@ -15,16 +15,10 @@
 // 1. SELECCIÓN DE ELEMENTOS DEL DOM
 // ============================================
 
-const messageForm = document.getElementById('messageForm');
-const userNameInput = document.getElementById('userName');
-const userMessageInput = document.getElementById('userMessage');
-const submitBtn = document.getElementById('submitBtn');
-const userNameError = document.getElementById('userNameError');
-const userMessageError = document.getElementById('userMessageError');
-const messagesContainer = document.getElementById('messagesContainer');
-const emptyState = document.getElementById('emptyState');
-const messageCount = document.getElementById('messageCount');
-let totalMessages = 0;
+const searchForm = document.getElementById('searchForm');
+const documentoInput = document.getElementById('documento');
+const documentoError = document.getElementById('documentoError');
+const resultadoUsuario = document.getElementById('resultadoUsuario');
 
 // ============================================
 // 2. FUNCIONES AUXILIARES
@@ -43,26 +37,16 @@ function clearError(errorElement) {
 }
 
 function validateForm() {
-    const userName = userNameInput.value;
-    const userMessage = userMessageInput.value;
+    const documento = documentoInput.value;
     let isValid = true;
 
-    if (!isValidInput(userName)) {
-        showError(userNameError, "El nombre es obligatorio");
-        userNameInput.classList.add("error");
+    if (!isValidInput(documento)) {
+        showError(documentoError, "El documento es obligatorio");
+        documentoInput.classList.add("error");
         isValid = false;
     } else {
-        clearError(userNameError);
-        userNameInput.classList.remove("error");
-    }
-
-    if (!isValidInput(userMessage)) {
-        showError(userMessageError, "El mensaje es obligatorio");
-        userMessageInput.classList.add("error");
-        isValid = false;
-    } else {
-        clearError(userMessageError);
-        userMessageInput.classList.remove("error");
+        clearError(documentoError);
+        documentoInput.classList.remove("error");
     }
 
     return isValid;
@@ -143,7 +127,6 @@ function renderTaskForm(usuario) {
                 })
             });
 
-            // Volver a consultar tareas y actualizar la card
             const responseTasks = await fetch(`http://localhost:3000/tasks?userId=${usuario.id}`);
             const tareas = await responseTasks.json();
             createUserCard(usuario, tareas);
@@ -169,17 +152,16 @@ async function handleFormSubmit(event) {
         return;
     }
 
-    const userName = userNameInput.value.trim();
-    const userMessage = userMessageInput.value.trim();
+    const documento = documentoInput.value.trim();
 
     try {
-        const response = await fetch(`http://localhost:3000/users?name=${userName}`);
+        const response = await fetch(`http://localhost:3000/users?document=${documento}`);
         const usuarios = await response.json();
 
         if (usuarios.length === 0) {
             resultadoUsuario.innerHTML = `
                 <div class="error-card">
-                    <p>No se encontró ningún usuario con el nombre "${userName}".</p>
+                    <p>No se encontró ningún usuario con el documento "${documento}".</p>
                 </div>
             `;
             return;
@@ -204,9 +186,8 @@ async function handleFormSubmit(event) {
 // 5. REGISTRO DE EVENTOS
 // ============================================
 
-messageForm.addEventListener('submit', handleFormSubmit);
-userNameInput.addEventListener('input', () => clearError(userNameError));
-userMessageInput.addEventListener('input', () => clearError(userMessageError));
+searchForm.addEventListener('submit', handleFormSubmit);
+documentoInput.addEventListener('input', () => clearError(documentoError));
 
 // ============================================
 // 7. INICIALIZACIÓN (OPCIONAL)
