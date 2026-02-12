@@ -74,6 +74,41 @@ function createUserCard(usuario, tareas) {
         <button class="btn btn--secondary" id="crearTareaBtn">Crear tarea</button>
     `;
 
+    // Contenedor de tareas
+    const tareasContainer = document.createElement("div");
+    tareasContainer.classList.add("tasks-container");
+
+    const tareasTitle = document.createElement("h4");
+    tareasTitle.textContent = "Listado de tareas";
+    tareasContainer.appendChild(tareasTitle);
+
+    if (tareas.length === 0) {
+        const noTask = document.createElement("p");
+        noTask.textContent = "No hay tareas registradas.";
+        tareasContainer.appendChild(noTask);
+    } else {
+        tareas.forEach(t => {
+            const taskItem = document.createElement("div");
+            taskItem.classList.add("task-item");
+
+            const taskText = document.createElement("p");
+            taskText.innerHTML = `<strong>${t.title}</strong> - ${t.status}`;
+
+            const deleteBtn = document.createElement("button");
+            deleteBtn.classList.add("btn", "btn--danger");
+            deleteBtn.textContent = "Eliminar";
+
+            // Enganchar evento correctamente
+            deleteBtn.addEventListener("click", () => deleteTask(t.id, usuario.id));
+
+            taskItem.appendChild(taskText);
+            taskItem.appendChild(deleteBtn);
+            tareasContainer.appendChild(taskItem);
+        });
+    }
+
+    card.appendChild(tareasContainer);
+
     resultadoUsuario.innerHTML = "";
     resultadoUsuario.appendChild(card);
 
@@ -139,6 +174,31 @@ function renderTaskForm(usuario) {
             `;
         }
     });
+}
+
+/**
+ * Elimina una tarea existente
+ * @param {number} taskId - ID de la tarea
+ * @param {number} userId - ID del usuario
+ */
+async function deleteTask(taskId, userId) {
+    try {
+        await fetch(`http://localhost:3000/tasks/${taskId}`, { method: "DELETE" });
+
+        const responseTasks = await fetch(`http://localhost:3000/tasks?userId=${userId}`);
+        const tareas = await responseTasks.json();
+
+        const responseUser = await fetch(`http://localhost:3000/users/${userId}`);
+        const usuario = await responseUser.json();
+
+        createUserCard(usuario, tareas);
+    } catch (error) {
+        resultadoUsuario.innerHTML += `
+            <div class="error-card">
+                <p>Error al eliminar la tarea.</p>
+            </div>
+        `;
+    }
 }
 
 // ============================================
