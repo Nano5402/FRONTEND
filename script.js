@@ -2,10 +2,10 @@
  * ============================================
  * EJERCICIO DE MANIPULACIÓN DEL DOM
  * ============================================
- * 
+ *
  * Objetivo: Aplicar conceptos del DOM para seleccionar elementos,
  * responder a eventos y crear nuevos elementos dinámicamente.
- * 
+ *
  * Autor: Andrés Santiago Calvete Lesmes, Ana Isabella Garcia Rozo
  * Fecha: 11/02/26
  * ============================================
@@ -64,15 +64,29 @@ function createUserCard(usuario, tareas) {
     const card = document.createElement("div");
     card.classList.add("user-card");
 
-    card.innerHTML = `
-        <h3>${usuario.name}</h3>
-        <p><strong>Documento:</strong> ${usuario.document}</p>
-        <p><strong>Correo:</strong> ${usuario.email}</p>
-        <p><strong>Total tareas:</strong> ${total}</p>
-        <p><strong>Pendientes:</strong> ${pendientes}</p>
-        <p><strong>Completadas:</strong> ${completadas}</p>
-        <button class="btn btn--secondary" id="crearTareaBtn">Crear tarea</button>
-    `;
+    // Datos del usuario
+    const h3 = document.createElement("h3");
+    h3.textContent = usuario.name;
+
+    const docP = document.createElement("p");
+    docP.innerHTML = `<strong>Documento:</strong> ${usuario.document}`;
+
+    const emailP = document.createElement("p");
+    emailP.innerHTML = `<strong>Correo:</strong> ${usuario.email}`;
+
+    const totalP = document.createElement("p");
+    totalP.innerHTML = `<strong>Total tareas:</strong> ${total}`;
+
+    const pendientesP = document.createElement("p");
+    pendientesP.innerHTML = `<strong>Pendientes:</strong> ${pendientes}`;
+
+    const completadasP = document.createElement("p");
+    completadasP.innerHTML = `<strong>Completadas:</strong> ${completadas}`;
+
+    const crearTareaBtn = document.createElement("button");
+    crearTareaBtn.classList.add("btn", "btn--secondary");
+    crearTareaBtn.textContent = "Crear tarea";
+    crearTareaBtn.addEventListener("click", () => renderTaskForm(usuario));
 
     // Contenedor de tareas
     const tareasContainer = document.createElement("div");
@@ -97,8 +111,6 @@ function createUserCard(usuario, tareas) {
             const deleteBtn = document.createElement("button");
             deleteBtn.classList.add("btn", "btn--danger");
             deleteBtn.textContent = "Eliminar";
-
-            // Enganchar evento correctamente
             deleteBtn.addEventListener("click", () => deleteTask(t.id, usuario.id));
 
             taskItem.appendChild(taskText);
@@ -107,15 +119,18 @@ function createUserCard(usuario, tareas) {
         });
     }
 
+    // Ensamblar card
+    card.appendChild(h3);
+    card.appendChild(docP);
+    card.appendChild(emailP);
+    card.appendChild(totalP);
+    card.appendChild(pendientesP);
+    card.appendChild(completadasP);
+    card.appendChild(crearTareaBtn);
     card.appendChild(tareasContainer);
 
     resultadoUsuario.innerHTML = "";
     resultadoUsuario.appendChild(card);
-
-    const crearTareaBtn = document.getElementById("crearTareaBtn");
-    crearTareaBtn.addEventListener("click", () => {
-        renderTaskForm(usuario);
-    });
 }
 
 /**
@@ -126,24 +141,48 @@ function renderTaskForm(usuario) {
     const form = document.createElement("form");
     form.classList.add("form");
 
-    form.innerHTML = `
-        <div class="form__group">
-            <label for="taskTitle" class="form__label">Título de la tarea</label>
-            <input type="text" id="taskTitle" class="form__input" placeholder="Ingresa el título">
-        </div>
-        <div class="form__group">
-            <label for="taskBody" class="form__label">Descripción</label>
-            <textarea id="taskBody" class="form__input form__textarea" placeholder="Ingresa la descripción"></textarea>
-        </div>
-        <button type="submit" class="btn btn--primary">Guardar tarea</button>
-    `;
+    const groupTitle = document.createElement("div");
+    groupTitle.classList.add("form__group");
+    const labelTitle = document.createElement("label");
+    labelTitle.setAttribute("for", "taskTitle");
+    labelTitle.classList.add("form__label");
+    labelTitle.textContent = "Título de la tarea";
+    const inputTitle = document.createElement("input");
+    inputTitle.type = "text";
+    inputTitle.id = "taskTitle";
+    inputTitle.classList.add("form__input");
+    inputTitle.placeholder = "Ingresa el título";
+    groupTitle.appendChild(labelTitle);
+    groupTitle.appendChild(inputTitle);
+
+    const groupBody = document.createElement("div");
+    groupBody.classList.add("form__group");
+    const labelBody = document.createElement("label");
+    labelBody.setAttribute("for", "taskBody");
+    labelBody.classList.add("form__label");
+    labelBody.textContent = "Descripción";
+    const textareaBody = document.createElement("textarea");
+    textareaBody.id = "taskBody";
+    textareaBody.classList.add("form__input", "form__textarea");
+    textareaBody.placeholder = "Ingresa la descripción";
+    groupBody.appendChild(labelBody);
+    groupBody.appendChild(textareaBody);
+
+    const saveBtn = document.createElement("button");
+    saveBtn.type = "submit";
+    saveBtn.classList.add("btn", "btn--primary");
+    saveBtn.textContent = "Guardar tarea";
+
+    form.appendChild(groupTitle);
+    form.appendChild(groupBody);
+    form.appendChild(saveBtn);
 
     resultadoUsuario.appendChild(form);
 
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
-        const title = document.getElementById("taskTitle").value.trim();
-        const body = document.getElementById("taskBody").value.trim();
+        const title = inputTitle.value.trim();
+        const body = textareaBody.value.trim();
 
         if (!title || !body) {
             alert("Todos los campos son obligatorios");
@@ -167,11 +206,10 @@ function renderTaskForm(usuario) {
             createUserCard(usuario, tareas);
 
         } catch (error) {
-            resultadoUsuario.innerHTML += `
-                <div class="error-card">
-                    <p>Error al crear la tarea.</p>
-                </div>
-            `;
+            const errorCard = document.createElement("div");
+            errorCard.classList.add("error-card");
+            errorCard.textContent = "Error al crear la tarea.";
+            resultadoUsuario.appendChild(errorCard);
         }
     });
 }
@@ -193,11 +231,10 @@ async function deleteTask(taskId, userId) {
 
         createUserCard(usuario, tareas);
     } catch (error) {
-        resultadoUsuario.innerHTML += `
-            <div class="error-card">
-                <p>Error al eliminar la tarea.</p>
-            </div>
-        `;
+        const errorCard = document.createElement("div");
+        errorCard.classList.add("error-card");
+        errorCard.textContent = "Error al eliminar la tarea.";
+        resultadoUsuario.appendChild(errorCard);
     }
 }
 
@@ -219,11 +256,11 @@ async function handleFormSubmit(event) {
         const usuarios = await response.json();
 
         if (usuarios.length === 0) {
-            resultadoUsuario.innerHTML = `
-                <div class="error-card">
-                    <p>No se encontró ningún usuario con el documento "${documento}".</p>
-                </div>
-            `;
+            const errorCard = document.createElement("div");
+            errorCard.classList.add("error-card");
+            errorCard.textContent = `No se encontró ningún usuario con el documento "${documento}".`;
+            resultadoUsuario.innerHTML = "";
+            resultadoUsuario.appendChild(errorCard);
             return;
         }
 
@@ -234,11 +271,11 @@ async function handleFormSubmit(event) {
         createUserCard(usuario, tareas);
 
     } catch (error) {
-        resultadoUsuario.innerHTML = `
-            <div class="error-card">
-                <p>Error al consultar el servidor.</p>
-            </div>
-        `;
+        const errorCard = document.createElement("div");
+        errorCard.classList.add("error-card");
+        errorCard.textContent = "Error al consultar el servidor.";
+        resultadoUsuario.innerHTML = "";
+        resultadoUsuario.appendChild(errorCard);
     }
 }
 
