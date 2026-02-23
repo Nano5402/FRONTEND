@@ -91,18 +91,22 @@ function createUserCard(usuario, tareas) {
             const taskItem = document.createElement("div");
             taskItem.classList.add("task-item");
 
+            taskItem.classList.add(t.status); // añade "pendiente" o "completada"
+
             const taskText = document.createElement("p");
             taskText.innerHTML = `<strong>${t.title}</strong> - ${t.status}`;
 
             const deleteBtn = document.createElement("button");
             deleteBtn.classList.add("btn", "btn--danger");
             deleteBtn.textContent = "Eliminar";
-
-            // Enganchar evento correctamente
             deleteBtn.addEventListener("click", () => deleteTask(t.id, usuario.id));
+
+            // Botón alternar estado (Completar ↔ Pendiente)
+            const toggleBtn = crearBotonToggle(t.id, usuario.id, t.status);
 
             taskItem.appendChild(taskText);
             taskItem.appendChild(deleteBtn);
+            taskItem.appendChild(toggleBtn);
             tareasContainer.appendChild(taskItem);
         });
     }
@@ -199,6 +203,41 @@ async function deleteTask(taskId, userId) {
             </div>
         `;
     }
+}
+
+
+function crearBotonToggle(taskId, userId, currentStatus) {
+    const boton = document.createElement("button");
+    boton.classList.add("btn", "btn--success");
+
+    // Texto inicial según estado
+    boton.textContent = currentStatus === "pendiente" ? "Completar" : "Pendiente";
+
+    boton.addEventListener("click", async () => {
+        try {
+            const nuevoEstado = currentStatus === "pendiente" ? "completada" : "pendiente";
+
+            await fetch(`http://localhost:3000/tasks/${taskId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status: nuevoEstado })
+            });
+
+            const responseTasks = await fetch(`http://localhost:3000/tasks?userId=${userId}`);
+            const tareas = await responseTasks.json();
+
+            const responseUser = await fetch(`http://localhost:3000/users/${userId}`);
+            const usuario = await responseUser.json();
+
+            createUserCard(usuario, tareas);
+
+        } catch (error) {
+            alert("Error al actualizar la tarea");
+            console.error(error);
+        }
+    });
+
+    return boton;
 }
 
 // ============================================
