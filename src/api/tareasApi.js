@@ -46,3 +46,15 @@ export async function eliminarTarea(taskId) {
     });
     return response.ok; // true si el servidor respondió con éxito
 }
+
+/**
+ * Actualiza una tarea existente (estado o texto)
+ */
+export async function actualizarTareaApi(taskId, datosNuevos) {
+    const response = await fetch(`${API_URL}/tasks/${taskId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(datosNuevos)
+    });
+    return await response.json();
+}

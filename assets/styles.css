@@ -422,6 +422,10 @@ body {
     background: var(--color-surface);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm);
+<<<<<<< dev
+    margin-top: var(--spacing-2xl);
+=======
+>>>>>>> release
 }
 
 .footer__text {
@@ -547,16 +551,45 @@ body {
     font-weight: var(--font-weight-medium);
 }
 
+<<<<<<< dev
+/* --- BOTÓN SECUNDARIO (CANCELAR) --- */
+.btn--secondary {
+    background-color: var(--color-gray-200);
+    color: var(--color-gray-800);
+    box-shadow: none;
+=======
 /* Botón secundario */
 .btn--secondary {
     background-color: var(--color-success);
     color: white;
     box-shadow: var(--shadow-sm);
     margin-top: var(--spacing-md);
+>>>>>>> release
     transition: all var(--transition-base);
 }
 
 .btn--secondary:hover {
+<<<<<<< dev
+    background-color: var(--color-gray-300);
+    transform: translateY(-1px);
+}
+
+/* --- CONTENEDOR DE BOTONES DEL FORMULARIO --- */
+.form-tarea .form__actions {
+    display: flex;
+    gap: var(--spacing-md); /* Esto separa los botones */
+    margin-top: var(--spacing-xl);
+}
+
+.form-tarea .btn {
+    flex: 1; /* Hace que ambos midan 50% y 50% */
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none; /* Quitamos bordes raros */
+    margin: 0;
+=======
     background-color: #0f9d75; /* tono más oscuro del success */
     box-shadow: var(--shadow-md);
     transform: translateY(-1px);
@@ -566,6 +599,7 @@ body {
     transform: translateY(0);
     box-shadow: var(--shadow-sm);
 
+>>>>>>> release
 }
  
 /* Botón de eliminar (danger) */
@@ -592,6 +626,296 @@ body {
   transform: scale(1.05);                  
 }
 
+<<<<<<< dev
+
+/* Contenedor principal de la lista */
+.tasks-container {
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--color-gray-200);
+}
+
+.tasks-container h4 {
+    margin-bottom: var(--spacing-lg);
+    color: var(--color-primary-dark);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+}
+
+/* Tarjeta individual de tarea */
+.task-item {
+    background-color: var(--color-background);
+    border: 1px solid var(--color-gray-200);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all var(--transition-base);
+}
+
+.task-item:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-primary-light);
+}
+
+/* --- ESTADO: COMPLETADA --- */
+.task-item.completed {
+    background-color: var(--color-gray-50);
+    border-left: 4px solid var(--color-success); /* Borde verde a la izquierda */
+    opacity: 0.85;
+}
+
+.task-item.completed h5 {
+    text-decoration: line-through;
+    color: var(--color-gray-500);
+}
+
+.task-item.completed p {
+    color: var(--color-gray-400);
+}
+
+/* Información de texto de la tarea */
+.task-info {
+    flex: 1;
+    padding-right: var(--spacing-md);
+}
+
+.task-info h5 {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.task-info p {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    margin: 0;
+}
+
+/* Contenedor de botones de acción */
+.task-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+}
+
+/* Botones pequeños para la lista */
+.btn--sm {
+    padding: 0.4rem 0.8rem;
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Botón para Completar (Verde) */
+.btn--success {
+    background-color: var(--color-success);
+    color: white;
+    border: 1px solid var(--color-success);
+}
+
+.btn--success:hover {
+    background-color: #059669; /* Verde más oscuro */
+    box-shadow: var(--shadow-sm);
+}
+
+/* Botón para Reabrir (Ámbar/Naranja) */
+.btn--warning {
+    background-color: var(--color-warning);
+    color: white;
+    border: 1px solid var(--color-warning);
+}
+
+.btn--warning:hover {
+    background-color: #d97706; /* Naranja más oscuro */
+    box-shadow: var(--shadow-sm);
+}
+
+/* Estadísticas en el encabezado del usuario */
+.stats-bar {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: var(--color-gray-50);
+    border: 1px solid var(--color-gray-200);
+    border-radius: var(--radius-md);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    text-align: center;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    font-weight: var(--font-weight-bold);
+}
+
+.stat-value {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary);
+}
+
+
+/* Seleccionamos los botones DENTRO del formulario de tarea */
+.form-tarea div[style*="display:flex"] {
+    display: flex;
+    gap: 10px;
+}
+
+.form-tarea .btn {
+    /* Esto hace que ambos botones tengan EXACTAMENTE el mismo ancho */
+    flex: 1; 
+    
+    /* Asegura que el texto esté centrado */
+    justify-content: center; 
+    
+    /* Esto iguala la altura si uno tiene borde y el otro no */
+    border: 2px solid transparent; 
+}
+
+/* Ajuste específico para que el botón Cancelar se vea igual de sólido */
+.btn--secondary {
+    border-color: var(--color-gray-400); /* Le damos borde para igualar tamaño */
+}
+
+.form-tarea .btn {
+    /* 1. Altura fija obligatoria para ambos */
+    height: 45px !important; 
+    
+    /* 2. Reseteamos el relleno vertical para que no sume altura extra */
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    
+    /* 3. Centramos el texto perfectamente en el medio */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    /* 4. Igualamos el grosor del borde */
+    border-width: 2px;
+    border-style: solid;
+}
+
+/* Aseguramos que el botón GUARDAR tenga el borde del mismo color que su fondo */
+.form-tarea .btn--primary {
+    border-color: var(--color-primary);
+}
+
+/* Aseguramos que el botón CANCELAR tenga su borde gris */
+.form-tarea .btn--secondary {
+    border-color: var(--color-gray-500); /* O el color gris que estés usando */
+}
+
+/* 1. Quitamos cualquier margen rebelde que venga de otras clases */
+.form-tarea .btn {
+    margin: 0 !important;
+}
+
+/* 2. Aseguramos que el contenedor los alinee al centro verticalmente */
+.form-tarea div[style*="display:flex"] {
+    display: flex;
+    gap: 15px; /* Espacio entre botones */
+    align-items: center; /* Alineación vertical perfecta */
+    margin-top: 20px; /* Separación de los inputs de arriba */
+}
+
+.toast-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 9999;
+}
+
+.toast {
+    min-width: 250px;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--radius-md);
+    color: white;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    animation: slideInRight var(--transition-base) ease-out forwards;
+}
+
+/* Variantes de estado */
+.toast--success { background-color: var(--color-success); }
+.toast--error { background-color: var(--color-error); }
+.toast--warning { background-color: var(--color-warning); }
+.toast--info { background-color: var(--color-primary); }
+
+/* Animación de salida controlada por JS */
+.toast.fade-out-toast {
+    animation: fadeOutRight var(--transition-base) ease-in forwards;
+}
+
+@keyframes slideInRight {
+    from { transform: translateX(120%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes fadeOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(120%); opacity: 0; }
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(17, 24, 39, 0.6); /* var(--color-gray-900) con opacidad */
+    backdrop-filter: blur(4px);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 10000;
+    animation: fadeIn var(--transition-base) ease-out;
+}
+
+.modal-content {
+    background: var(--color-surface);
+    padding: var(--spacing-xl);
+    border-radius: var(--radius-lg);
+    width: 90%; 
+    max-width: 450px;
+    box-shadow: var(--shadow-xl);
+    animation: slideUp var(--transition-base) ease-out;
+}
+
+.modal-header {
+    margin-bottom: var(--spacing-lg);
+    color: var(--color-primary-dark);
+    font-size: var(--font-size-xl);
+}
+
+.modal-actions {
+    display: flex; 
+    justify-content: flex-end; 
+    gap: var(--spacing-md); 
+    margin-top: var(--spacing-xl);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+=======
 /* Botones pequeños */
 .btn--sm {
   padding: var(--spacing-sm) var(--spacing-md);
@@ -833,4 +1157,5 @@ body {
     opacity: 1;
     transform: scale(1);
   }
+>>>>>>> release
 }

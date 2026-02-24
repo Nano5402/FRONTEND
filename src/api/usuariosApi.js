@@ -24,7 +24,13 @@ export async function fetchUsuarioPorDocumento(documento) {
  * @returns {Object} - Los datos del usuario
  */
 export async function fetchUsuarioPorId(userId) {
+<<<<<<< dev
+  const response = await fetch(`${API_URL}/users/${userId}`);
+  const usuario = await response.json();
+  return usuario;
+=======
     const response = await fetch(`${API_URL}/users/${userId}`);
     const usuario = await response.json();
     return usuario;
+>>>>>>> release
 }

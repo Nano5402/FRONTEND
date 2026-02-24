@@ -1,28 +1,13 @@
-
 /**
  * ============================================
  * TAREASVIEW.JS - Componentes de UI para Tareas
  * ============================================
- *
- * Responsabilidad: Crear elementos DOM con createElement
- * No usa fetch - solo renderiza datos que recibe
  */
 
-/**
- * Crea una card de usuario completa con información y lista de tareas
- * @param {Object} usuario - Datos del usuario
- * @param {Array} tareas - Array de tareas del usuario
- * @param {Function} onCrearTarea - Callback para crear tarea
- * @param {Function} onEditar - Callback para editar tarea
- * @param {Function} onToggle - Callback para cambiar estado
- * @param {Function} onEliminar - Callback para eliminar tarea
- */
-function createUserCard(usuario, tareas, onCrearTarea, onEditar, onToggle, onEliminar) {
-    // Contenedor principal (card)
+export function createUserCard(usuario, tareas, criterioActual, onCrearTarea, onEditar, onToggle, onEliminar, onOrdenar) {
     const card = document.createElement("div");
     card.classList.add("user-card");
 
-    // Header con información del usuario
     const header = document.createElement("div");
     header.style.marginBottom = "var(--spacing-lg)";
 
@@ -39,31 +24,28 @@ function createUserCard(usuario, tareas, onCrearTarea, onEditar, onToggle, onEli
     header.appendChild(documento);
     header.appendChild(correo);
 
-    // Estadísticas de tareas
     const total = tareas.length;
     const pendientes = tareas.filter(t => t.status === "pendiente").length;
     const completadas = tareas.filter(t => t.status === "completada").length;
 
     const stats = document.createElement("div");
-    stats.style.marginBottom = "var(--spacing-lg)";
-    stats.style.padding = "var(--spacing-md)";
-    stats.style.backgroundColor = "var(--color-gray-50)";
-    stats.style.borderRadius = "var(--radius-md)";
+    stats.classList.add("stats-bar"); 
 
-    const totalTareas = document.createElement("p");
-    totalTareas.innerHTML = `<strong>Total tareas:</strong> ${total}`;
+    stats.innerHTML = `
+        <div class="stat-item">
+            <span class="stat-label">Total</span>
+            <span class="stat-value">${total}</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Pendientes</span>
+            <span class="stat-value" style="color: var(--color-warning)">${pendientes}</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Completadas</span>
+            <span class="stat-value" style="color: var(--color-success)">${completadas}</span>
+        </div>
+    `;
 
-    const tareasP = document.createElement("p");
-    tareasP.innerHTML = `<strong>Pendientes:</strong> ${pendientes}`;
-
-    const tareasC = document.createElement("p");
-    tareasC.innerHTML = `<strong>Completadas:</strong> ${completadas}`;
-
-    stats.appendChild(totalTareas);
-    stats.appendChild(tareasP);
-    stats.appendChild(tareasC);
-
-    // Botón para crear tarea
     const btnCrearTarea = document.createElement("button");
     btnCrearTarea.classList.add("btn", "btn--secondary");
     btnCrearTarea.textContent = "Crear tarea";
@@ -73,14 +55,42 @@ function createUserCard(usuario, tareas, onCrearTarea, onEditar, onToggle, onEli
     card.appendChild(stats);
     card.appendChild(btnCrearTarea);
 
-    // Contenedor de tareas
+    // --- NUEVO CONTENEDOR DE TAREAS CON SELECTOR DE ORDEN ---
     const tareasContainer = document.createElement("div");
     tareasContainer.classList.add("tasks-container");
 
+    const listHeader = document.createElement("div");
+    listHeader.style.display = "flex";
+    listHeader.style.justifyContent = "space-between";
+    listHeader.style.alignItems = "center";
+    listHeader.style.marginBottom = "var(--spacing-lg)";
+
     const titleTareas = document.createElement("h4");
     titleTareas.textContent = "Listado de tareas";
-    tareasContainer.appendChild(titleTareas);
+    titleTareas.style.margin = "0";
 
+    const selectOrden = document.createElement("select");
+    selectOrden.classList.add("form__input");
+    selectOrden.style.width = "auto";
+    selectOrden.style.padding = "var(--spacing-xs) var(--spacing-sm)";
+    selectOrden.innerHTML = `
+        <option value="fecha">Más recientes primero</option>
+        <option value="nombre">Orden alfabético (A-Z)</option>
+        <option value="estado">Por estado</option>
+    `;
+    
+    // Dejar seleccionada la opción actual para que no se reinicie
+    selectOrden.value = criterioActual || "fecha";
+
+    if (onOrdenar) {
+        selectOrden.addEventListener("change", (e) => onOrdenar(e.target.value));
+    }
+
+    listHeader.appendChild(titleTareas);
+    listHeader.appendChild(selectOrden);
+    tareasContainer.appendChild(listHeader);
+
+    // --- RENDERIZADO DE TAREAS ---
     if (tareas.length === 0) {
         const noTareas = document.createElement("p");
         noTareas.textContent = "No hay tareas registradas.";
@@ -89,37 +99,25 @@ function createUserCard(usuario, tareas, onCrearTarea, onEditar, onToggle, onEli
         tareasContainer.appendChild(noTareas);
     } else {
         tareas.forEach(tarea => {
-            const taskItem = createTaskItem(
-                tarea,
-                onEditar,
-                (t) => onToggle(t.id, t.status, usuario.id),
-                (t) => onEliminar(t.id, usuario.id)
-            );
+            const taskItem = createTaskItem(tarea, onEditar, onToggle, onEliminar);
             tareasContainer.appendChild(taskItem);
         });
     }
 
     card.appendChild(tareasContainer);
-
     return card;
 }
 
-/**
- * Crea un item individual de tarea con sus acciones
- * @param {Object} tarea - Datos de la tarea
- * @param {Function} onEditar - Callback para editar
- * @param {Function} onToggle - Callback para cambiar estado
- * @param {Function} onEliminar - Callback para eliminar
- */
-function createTaskItem(tarea, onEditar, onToggle, onEliminar) {
+export function createTaskItem(tarea, onEditar, onToggle, onEliminar) {
     const taskItem = document.createElement("div");
     taskItem.classList.add("task-item");
 
-    if (tarea.status === "completada") {
+    const isCompleted = tarea.status === "completada";
+
+    if (isCompleted) {
         taskItem.classList.add("completed");
     }
 
-    // Información de la tarea
     const taskInfo = document.createElement("div");
     taskInfo.classList.add("task-info");
 
@@ -134,11 +132,10 @@ function createTaskItem(tarea, onEditar, onToggle, onEliminar) {
     taskInfo.appendChild(titulo);
     taskInfo.appendChild(descripcion);
 
-    // Contenedor de acciones
     const actionsContainer = document.createElement("div");
     actionsContainer.classList.add("task-actions");
 
-    // Botón Editar
+    // 1. Botón Editar
     if (onEditar) {
         const btnEditar = document.createElement("button");
         btnEditar.classList.add("btn", "btn--sm", "btn--primary");
@@ -147,17 +144,16 @@ function createTaskItem(tarea, onEditar, onToggle, onEliminar) {
         actionsContainer.appendChild(btnEditar);
     }
 
-    // Botón Completar/Desmarcar
+    // 2. Botón Cambiar Estado (Completar / En progreso)
     if (onToggle) {
         const btnToggle = document.createElement("button");
-        const isCompleted = tarea.status === "completada";
         btnToggle.classList.add("btn", "btn--sm", isCompleted ? "btn--warning" : "btn--success");
-        btnToggle.textContent = isCompleted ? "Desmarcar" : "Completar";
+        btnToggle.textContent = isCompleted ? "En progreso" : "Completar";
         btnToggle.addEventListener("click", () => onToggle(tarea));
         actionsContainer.appendChild(btnToggle);
     }
 
-    // Botón Eliminar
+    // 3. Botón Eliminar
     if (onEliminar) {
         const btnEliminar = document.createElement("button");
         btnEliminar.classList.add("btn", "btn--sm", "btn--danger");
@@ -172,19 +168,11 @@ function createTaskItem(tarea, onEditar, onToggle, onEliminar) {
     return taskItem;
 }
 
-/**
- * Renderiza el formulario para crear/editar una tarea
- * @param {Object} usuario - Usuario propietario de la tarea
- * @param {Function} onSubmit - Callback cuando se envía el formulario
- * @param {Function} onCancel - Callback para cancelar
- * @returns {HTMLElement} - El formulario
- */
-function renderTaskForm(usuario, onSubmit, onCancel) {
+export function renderTaskForm(usuario, onSubmit, onCancel) {
     const form = document.createElement("form");
-    form.classList.add("form");
+    form.classList.add("form", "form-tarea"); 
     form.style.marginTop = "var(--spacing-xl)";
 
-    // Grupo título
     const grupoTitulo = document.createElement("div");
     grupoTitulo.classList.add("form__group");
 
@@ -203,7 +191,6 @@ function renderTaskForm(usuario, onSubmit, onCancel) {
     grupoTitulo.appendChild(labelTitulo);
     grupoTitulo.appendChild(inputTitulo);
 
-    // Grupo descripción
     const grupoDescripcion = document.createElement("div");
     grupoDescripcion.classList.add("form__group");
 
@@ -220,30 +207,26 @@ function renderTaskForm(usuario, onSubmit, onCancel) {
     grupoDescripcion.appendChild(labelDescripcion);
     grupoDescripcion.appendChild(textareaDescripcion);
 
-    // Botones de acción
     const botones = document.createElement("div");
-    botones.style.display = "flex";
-    botones.style.gap = "var(--spacing-md)";
-    botones.style.justifyContent = "flex-end";
-
-    const btnGuardar = document.createElement("button");
-    btnGuardar.type = "submit";
-    btnGuardar.classList.add("btn", "btn--primary");
-    btnGuardar.textContent = "Guardar";
+    botones.classList.add("form__actions"); 
 
     const btnCancelar = document.createElement("button");
     btnCancelar.type = "button";
     btnCancelar.classList.add("btn", "btn--secondary");
     btnCancelar.textContent = "Cancelar";
 
-    botones.appendChild(btnGuardar);
+    const btnGuardar = document.createElement("button");
+    btnGuardar.type = "submit";
+    btnGuardar.classList.add("btn", "btn--primary");
+    btnGuardar.textContent = "Guardar";
+
     botones.appendChild(btnCancelar);
+    botones.appendChild(btnGuardar);
 
     form.appendChild(grupoTitulo);
     form.appendChild(grupoDescripcion);
     form.appendChild(botones);
 
-    // Event listeners
     form.addEventListener("submit", (e) => {
         e.preventDefault();
         const title = inputTitulo.value.trim();
@@ -254,36 +237,22 @@ function renderTaskForm(usuario, onSubmit, onCancel) {
             return;
         }
 
-        onSubmit({
-            title,
-            body,
-            usuario
-        });
+        onSubmit({ title, body, usuario });
     });
 
     btnCancelar.addEventListener("click", () => {
-        if (onCancel) {
-            onCancel();
-        } else {
-            form.remove();
-        }
+        if (onCancel) onCancel();
+        else form.remove();
     });
 
     return form;
 }
 
-/**
- * Crea una card de error
- * @param {string} mensaje - Mensaje de error
- */
-function createErrorCard(mensaje) {
+export function createErrorCard(mensaje) {
     const errorCard = document.createElement("div");
     errorCard.classList.add("error-card");
-
     const parrafo = document.createElement("p");
     parrafo.textContent = mensaje;
-
     errorCard.appendChild(parrafo);
-
     return errorCard;
 }
