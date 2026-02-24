@@ -46,3 +46,34 @@ export async function eliminarTarea(taskId) {
     });
     return response.ok; // true si el servidor respondió con éxito
 }
+// src/api/tareasApi.js
+
+import { API_URL } from '../config/constants.js';
+
+
+/**
+ * RF04 — Prepara los datos de tareas para exportación
+ * Esta función NO toca el DOM. Solo transforma datos.
+ * @param {Array} tareas - El array de tareas del usuario
+ * @param {Object} usuario - Los datos del usuario dueño de las tareas
+ * @returns {string} - Un string JSON formateado y listo para guardar
+ */
+export function prepararExportacion(tareas, usuario) {
+    // Construimos un objeto con contexto completo
+    const exportData = {
+        exportadoEn: new Date().toISOString(),
+        usuario: {
+            id: usuario.id,
+            nombre: usuario.name,
+            documento: usuario.document
+        },
+        totalTareas: tareas.length,
+        pendientes: tareas.filter(t => t.status === "pendiente").length,
+        completadas: tareas.filter(t => t.status === "completada").length,
+        tareas: tareas
+    };
+
+    // JSON.stringify con (null, 2) formatea el JSON con indentación de 2 espacios
+    // para que el archivo sea legible por humanos
+    return JSON.stringify(exportData, null, 2);
+}
