@@ -52,6 +52,69 @@ function validateForm() {
     return isValid;
 }
 
+
+
+// ============================================
+// RF04 — EXPORTACIÓN DE TAREAS
+// ============================================
+
+/**
+ * Recibe un string JSON y lo descarga como archivo .json
+ * Esta función SÍ toca el DOM (crea un <a> invisible)
+ * @param {string} contenidoJSON - El string ya preparado para guardar
+ * @param {string} nombreArchivo - El nombre que tendrá el archivo descargado
+ */
+function descargarJSON(contenidoJSON, nombreArchivo) {
+    // Paso 1: Crear un "Blob" — es como un archivo en memoria del navegador
+    // Le decimos que el tipo de contenido es JSON
+    const blob = new Blob([contenidoJSON], { type: 'application/json' });
+
+    // Paso 2: Crear una URL temporal que apunta a ese archivo en memoria
+    const urlTemporal = URL.createObjectURL(blob);
+
+    // Paso 3: Crear un enlace <a> invisible
+    const enlace = document.createElement('a');
+    enlace.href = urlTemporal;
+    enlace.download = nombreArchivo; // el atributo download define el nombre del archivo
+
+    // Paso 4: Insertar el enlace en el DOM y simular el clic
+    document.body.appendChild(enlace);
+    enlace.click();
+
+    // Paso 5: Limpiar — eliminar el enlace y liberar la URL temporal de memoria
+    document.body.removeChild(enlace);
+    URL.revokeObjectURL(urlTemporal);
+}
+
+/**
+ * Prepara los datos de tareas para exportaciÃ³n
+ * Esta funciÃ³n NO toca el DOM. Solo transforma datos.
+ * @param {Array} tareas - El array de tareas del usuario
+ * @param {Object} usuario - Los datos del usuario dueÃ±o de las tareas
+ * @returns {string} - Un string JSON formateado y listo para guardar
+ */
+function prepararExportacion(tareas, usuario) {
+    const exportData = {
+        exportadoEn: new Date().toISOString(),
+        usuario: {
+            id: usuario.id,
+            nombre: usuario.name,
+            documento: usuario.document
+        },
+        totalTareas: tareas.length,
+        pendientes: tareas.filter(t => t.status === "pendiente").length,
+        completadas: tareas.filter(t => t.status === "completada").length,
+        tareas: tareas
+    };
+
+    return JSON.stringify(exportData, null, 2);
+}
+
+
+
+
+
+
 // ============================================
 // 3. CREACIÓN DE ELEMENTOS
 // ============================================
@@ -64,15 +127,17 @@ function createUserCard(usuario, tareas) {
     const card = document.createElement("div");
     card.classList.add("user-card");
 
-    card.innerHTML = `
-        <h3>${usuario.name}</h3>
-        <p><strong>Documento:</strong> ${usuario.document}</p>
-        <p><strong>Correo:</strong> ${usuario.email}</p>
-        <p><strong>Total tareas:</strong> ${total}</p>
-        <p><strong>Pendientes:</strong> ${pendientes}</p>
-        <p><strong>Completadas:</strong> ${completadas}</p>
-        <button class="btn btn--secondary" id="crearTareaBtn">Crear tarea</button>
-    `;
+    //—botón de exportar tareas— se agrega aquí porque necesita el contexto de usuario y tareas para preparar la exportación
+card.innerHTML = `
+    <h3>${usuario.name}</h3>
+    <p><strong>Documento:</strong> ${usuario.document}</p>
+    <p><strong>Correo:</strong> ${usuario.email}</p>
+    <p><strong>Total tareas:</strong> ${total}</p>
+    <p><strong>Pendientes:</strong> ${pendientes}</p>
+    <p><strong>Completadas:</strong> ${completadas}</p>
+    <button class="btn btn--secondary" id="crearTareaBtn">Crear tarea</button>
+    <button class="btn btn--export" id="exportarTareasBtn">⬇ Exportar tareas JSON</button>
+`;
 
     // Contenedor de tareas
     const tareasContainer = document.createElement("div");
@@ -116,7 +181,17 @@ function createUserCard(usuario, tareas) {
     crearTareaBtn.addEventListener("click", () => {
         renderTaskForm(usuario);
     });
+
+    const exportarTareasBtn = document.getElementById("exportarTareasBtn");
+    exportarTareasBtn.addEventListener("click", () => {
+        const contenidoJSON = prepararExportacion(tareas, usuario);
+        const nombreArchivo = `tareas-${usuario.document}-${Date.now()}.json`;
+        descargarJSON(contenidoJSON, nombreArchivo);
+    });
 }
+
+
+
 
 /**
  * Renderiza un formulario dinámico para crear una nueva tarea
