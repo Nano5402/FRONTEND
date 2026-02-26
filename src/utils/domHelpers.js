@@ -3,9 +3,9 @@ export function isValidInput(value) {
 }
 
 export function showError(errorElement, message) {
-    errorElement.textContent = message;
+    if (errorElement) errorElement.textContent = message;
 }
 
 export function clearError(errorElement) {
-    errorElement.textContent = "";
+    if (errorElement) errorElement.textContent = "";
 }

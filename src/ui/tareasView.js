@@ -4,7 +4,11 @@
  * ============================================
  */
 
-export function createUserCard(usuario, tareas, criterioActual, onCrearTarea, onEditar, onToggle, onEliminar, onOrdenar) {
+export function createUserCard(
+    usuario, todasLasTareas, tareasAMostrar, 
+    filtroActual, criterioActual, 
+    onCrearTarea, onEditar, onToggle, onEliminar, onFiltrar, onOrdenar
+) {
     const card = document.createElement("div");
     card.classList.add("user-card");
 
@@ -24,9 +28,11 @@ export function createUserCard(usuario, tareas, criterioActual, onCrearTarea, on
     header.appendChild(documento);
     header.appendChild(correo);
 
-    const total = tareas.length;
-    const pendientes = tareas.filter(t => t.status === "pendiente").length;
-    const completadas = tareas.filter(t => t.status === "completada").length;
+    // Calculamos estadísticas siempre con TODAS las tareas
+    const total = todasLasTareas.length;
+    const pendientes = todasLasTareas.filter(t => t.status === "pendiente").length;
+    const enProceso = todasLasTareas.filter(t => t.status === "en proceso").length;
+    const completadas = todasLasTareas.filter(t => t.status === "completada").length;
 
     const stats = document.createElement("div");
     stats.classList.add("stats-bar"); 
@@ -39,6 +45,10 @@ export function createUserCard(usuario, tareas, criterioActual, onCrearTarea, on
         <div class="stat-item">
             <span class="stat-label">Pendientes</span>
             <span class="stat-value" style="color: var(--color-warning)">${pendientes}</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">En Proceso</span>
+            <span class="stat-value" style="color: var(--color-primary)">${enProceso}</span>
         </div>
         <div class="stat-item">
             <span class="stat-label">Completadas</span>
@@ -55,50 +65,67 @@ export function createUserCard(usuario, tareas, criterioActual, onCrearTarea, on
     card.appendChild(stats);
     card.appendChild(btnCrearTarea);
 
-    // --- NUEVO CONTENEDOR DE TAREAS CON SELECTOR DE ORDEN ---
     const tareasContainer = document.createElement("div");
     tareasContainer.classList.add("tasks-container");
 
     const listHeader = document.createElement("div");
     listHeader.style.display = "flex";
-    listHeader.style.justifyContent = "space-between";
-    listHeader.style.alignItems = "center";
+    listHeader.style.flexDirection = "column";
+    listHeader.style.gap = "10px";
     listHeader.style.marginBottom = "var(--spacing-lg)";
 
     const titleTareas = document.createElement("h4");
     titleTareas.textContent = "Listado de tareas";
     titleTareas.style.margin = "0";
 
+    // Controles de Filtro y Orden
+    const controlesDiv = document.createElement("div");
+    controlesDiv.style.display = "flex";
+    controlesDiv.style.gap = "10px";
+    controlesDiv.style.flexWrap = "wrap";
+
+    // Select de Filtro (RF01)
+    const selectFiltro = document.createElement("select");
+    selectFiltro.classList.add("form__input");
+    selectFiltro.style.width = "auto";
+    selectFiltro.style.padding = "var(--spacing-xs) var(--spacing-sm)";
+    selectFiltro.innerHTML = `
+        <option value="todos">Todos los estados</option>
+        <option value="pendiente">Pendientes</option>
+        <option value="en proceso">En proceso</option>
+        <option value="completada">Completadas</option>
+    `;
+    selectFiltro.value = filtroActual || "todos";
+    selectFiltro.addEventListener("change", (e) => onFiltrar(e.target.value));
+
+    // Select de Orden (RF02)
     const selectOrden = document.createElement("select");
     selectOrden.classList.add("form__input");
     selectOrden.style.width = "auto";
     selectOrden.style.padding = "var(--spacing-xs) var(--spacing-sm)";
     selectOrden.innerHTML = `
-        <option value="fecha">Más recientes primero</option>
-        <option value="nombre">Orden alfabético (A-Z)</option>
-        <option value="estado">Por estado</option>
+        <option value="fecha">Por Fecha de creación</option>
+        <option value="nombre">Por Nombre (A-Z)</option>
+        <option value="estado">Por Estado</option>
     `;
-    
-    // Dejar seleccionada la opción actual para que no se reinicie
     selectOrden.value = criterioActual || "fecha";
+    selectOrden.addEventListener("change", (e) => onOrdenar(e.target.value));
 
-    if (onOrdenar) {
-        selectOrden.addEventListener("change", (e) => onOrdenar(e.target.value));
-    }
+    controlesDiv.appendChild(selectFiltro);
+    controlesDiv.appendChild(selectOrden);
 
     listHeader.appendChild(titleTareas);
-    listHeader.appendChild(selectOrden);
+    listHeader.appendChild(controlesDiv);
     tareasContainer.appendChild(listHeader);
 
-    // --- RENDERIZADO DE TAREAS ---
-    if (tareas.length === 0) {
+    if (tareasAMostrar.length === 0) {
         const noTareas = document.createElement("p");
-        noTareas.textContent = "No hay tareas registradas.";
+        noTareas.textContent = "No hay tareas que coincidan con los filtros.";
         noTareas.style.color = "var(--color-text-tertiary)";
         noTareas.style.fontStyle = "italic";
         tareasContainer.appendChild(noTareas);
     } else {
-        tareas.forEach(tarea => {
+        tareasAMostrar.forEach(tarea => {
             const taskItem = createTaskItem(tarea, onEditar, onToggle, onEliminar);
             tareasContainer.appendChild(taskItem);
         });
@@ -112,9 +139,7 @@ export function createTaskItem(tarea, onEditar, onToggle, onEliminar) {
     const taskItem = document.createElement("div");
     taskItem.classList.add("task-item");
 
-    const isCompleted = tarea.status === "completada";
-
-    if (isCompleted) {
+    if (tarea.status === "completada") {
         taskItem.classList.add("completed");
     }
 
@@ -135,7 +160,6 @@ export function createTaskItem(tarea, onEditar, onToggle, onEliminar) {
     const actionsContainer = document.createElement("div");
     actionsContainer.classList.add("task-actions");
 
-    // 1. Botón Editar
     if (onEditar) {
         const btnEditar = document.createElement("button");
         btnEditar.classList.add("btn", "btn--sm", "btn--primary");
@@ -144,16 +168,28 @@ export function createTaskItem(tarea, onEditar, onToggle, onEliminar) {
         actionsContainer.appendChild(btnEditar);
     }
 
-    // 2. Botón Cambiar Estado (Completar / En progreso)
     if (onToggle) {
         const btnToggle = document.createElement("button");
-        btnToggle.classList.add("btn", "btn--sm", isCompleted ? "btn--warning" : "btn--success");
-        btnToggle.textContent = isCompleted ? "En progreso" : "Completar";
+        let textoBoton = "Avanzar";
+        let claseBoton = "btn--info";
+        
+        if (tarea.status === "pendiente") {
+            textoBoton = "En proceso";
+            claseBoton = "btn--warning";
+        } else if (tarea.status === "en proceso") {
+            textoBoton = "Completar";
+            claseBoton = "btn--success";
+        } else {
+            textoBoton = "Reabrir";
+            claseBoton = "btn--secondary";
+        }
+        
+        btnToggle.classList.add("btn", "btn--sm", claseBoton);
+        btnToggle.textContent = textoBoton;
         btnToggle.addEventListener("click", () => onToggle(tarea));
         actionsContainer.appendChild(btnToggle);
     }
 
-    // 3. Botón Eliminar
     if (onEliminar) {
         const btnEliminar = document.createElement("button");
         btnEliminar.classList.add("btn", "btn--sm", "btn--danger");
@@ -236,7 +272,6 @@ export function renderTaskForm(usuario, onSubmit, onCancel) {
             alert("El título es obligatorio");
             return;
         }
-
         onSubmit({ title, body, usuario });
     });
 
