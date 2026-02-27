@@ -14,3 +14,5 @@ export {
     actualizarTarea,
     prepararExportacion   // RF04
 } from './tareasApi.js';
+
+export { descargarJSON, crearBotonExportar } from './exportUI.js';
