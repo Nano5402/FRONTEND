@@ -6,49 +6,33 @@
  * Diálogos y modales centrados en pantalla
  */
 
-/**
- * Crea e inserta un backdrop (overlay oscuro)
- */
-function createModalOverlay() {
+export function createModalOverlay() {
     const overlay = document.createElement("div");
     overlay.classList.add("modal-overlay");
     return overlay;
 }
 
-/**
- * Muestra un modal de confirmación
- * @param {string} titulo - Título del modal
- * @param {string} mensaje - Mensaje de confirmación
- * @param {string} textoBtnConfirmar - Texto del botón de confirmar
- * @param {string} textoBtnCancelar - Texto del botón de cancelar
- * @returns {Promise} - Resuelve true si confirma, false si cancela
- */
-function showConfirmModal(titulo, mensaje, textoBtnConfirmar = "Confirmar", textoBtnCancelar = "Cancelar") {
+export function showConfirmModal(titulo, mensaje, textoBtnConfirmar = "Confirmar", textoBtnCancelar = "Cancelar") {
     return new Promise((resolve) => {
         const overlay = createModalOverlay();
 
         const modal = document.createElement("div");
-        modal.classList.add("modal");
+        modal.classList.add("modal-content"); // Clase ajustada para tu CSS
 
         const header = document.createElement("div");
-        header.classList.add("modal__header");
+        header.classList.add("modal-header"); // Clase ajustada para tu CSS
 
         const titleEl = document.createElement("h2");
-        titleEl.classList.add("modal__title");
         titleEl.textContent = titulo;
-
         header.appendChild(titleEl);
 
         const body = document.createElement("div");
-        body.classList.add("modal__body");
-
         const mensajeEl = document.createElement("p");
         mensajeEl.textContent = mensaje;
-
         body.appendChild(mensajeEl);
 
         const footer = document.createElement("div");
-        footer.classList.add("modal__footer");
+        footer.classList.add("modal-actions"); // Clase ajustada para tu CSS
 
         const btnCancelar = document.createElement("button");
         btnCancelar.classList.add("btn", "btn--secondary");
@@ -87,39 +71,27 @@ function showConfirmModal(titulo, mensaje, textoBtnConfirmar = "Confirmar", text
     });
 }
 
-/**
- * Muestra un modal de alerta (solo lectura)
- * @param {string} titulo - Título del modal
- * @param {string} mensaje - Mensaje de alerta
- * @param {string} textoBtnOk - Texto del botón OK
- * @returns {Promise} - Resuelve cuando se cierra
- */
-function showAlertModal(titulo, mensaje, textoBtnOk = "OK") {
+export function showAlertModal(titulo, mensaje, textoBtnOk = "OK") {
     return new Promise((resolve) => {
         const overlay = createModalOverlay();
 
         const modal = document.createElement("div");
-        modal.classList.add("modal");
+        modal.classList.add("modal-content");
 
         const header = document.createElement("div");
-        header.classList.add("modal__header");
+        header.classList.add("modal-header");
 
         const titleEl = document.createElement("h2");
-        titleEl.classList.add("modal__title");
         titleEl.textContent = titulo;
-
         header.appendChild(titleEl);
 
         const body = document.createElement("div");
-        body.classList.add("modal__body");
-
         const mensajeEl = document.createElement("p");
         mensajeEl.textContent = mensaje;
-
         body.appendChild(mensajeEl);
 
         const footer = document.createElement("div");
-        footer.classList.add("modal__footer");
+        footer.classList.add("modal-actions");
         footer.style.justifyContent = "center";
 
         const btnOk = document.createElement("button");
@@ -150,32 +122,23 @@ function showAlertModal(titulo, mensaje, textoBtnOk = "OK") {
     });
 }
 
-/**
- * Muestra un modal con contenido personalizado
- * @param {string} titulo - Título del modal
- * @param {HTMLElement} contenido - Elemento HTML con el contenido
- * @param {boolean} mostrarBotones - Si muestra botones de ok/cancelar
- * @returns {Promise} - Resuelve true si confirma, false si cancela
- */
-function showCustomModal(titulo, contenido, mostrarBotones = true) {
+// AQUÍ ESTABA EL ERROR: Faltaba el export en esta función específica
+export function showCustomModal(titulo, contenido, mostrarBotones = true) {
     return new Promise((resolve) => {
         const overlay = createModalOverlay();
 
         const modal = document.createElement("div");
-        modal.classList.add("modal");
+        modal.classList.add("modal-content");
 
         const header = document.createElement("div");
-        header.classList.add("modal__header");
+        header.classList.add("modal-header");
 
         const titleEl = document.createElement("h2");
-        titleEl.classList.add("modal__title");
         titleEl.textContent = titulo;
-
         header.appendChild(titleEl);
 
         const body = document.createElement("div");
-        body.classList.add("modal__body");
-
+        
         if (typeof contenido === "string") {
             body.innerHTML = contenido;
         } else {
@@ -187,7 +150,7 @@ function showCustomModal(titulo, contenido, mostrarBotones = true) {
 
         if (mostrarBotones) {
             const footer = document.createElement("div");
-            footer.classList.add("modal__footer");
+            footer.classList.add("modal-actions");
 
             const btnCancelar = document.createElement("button");
             btnCancelar.classList.add("btn", "btn--secondary");
@@ -224,4 +187,3 @@ function showCustomModal(titulo, contenido, mostrarBotones = true) {
         });
     });
 }
-

@@ -2,297 +2,185 @@
  * ============================================
  * EJERCICIO DE MANIPULACIÓN DEL DOM
  * ============================================
- * 
- * Objetivo: Aplicar conceptos del DOM para seleccionar elementos,
+ * * Objetivo: Aplicar conceptos del DOM para seleccionar elementos,
  * responder a eventos y crear nuevos elementos dinámicamente.
- * 
- * Autor: Andrés Santiago Calvete Lesmes, Ana Isabella Garcia Rozo
+ * * Autor: Paulo Pacheco, Ana Isabella Garcia Rozo, Fernando Andrés Rodríguez Salamanca
  * Fecha: 11/02/26
  * ============================================
  */
 
 // ============================================
-// 1. SELECCIÓN DE ELEMENTOS DEL DOM
+// 1. IMPORTACIONES GLOBALES
 // ============================================
+import { isValidInput, showError, clearError } from './utils/domHelpers.js';
+import { procesarBusqueda, procesarNuevaTarea, procesarEliminacion, procesarActualizacion, ordenarTareas, filtrarTareasPorEstado } from './services/tareasService.js';
+import { createUserCard, renderTaskForm, createErrorCard } from './ui/tareasView.js';
+import { showSuccessToast, showErrorToast, showInfoToast } from './ui/components/toast.js';
+import { showConfirmModal, showCustomModal } from './ui/components/modal.js';
 
+// ============================================
+// 2. SELECCIÓN DE ELEMENTOS DEL DOM Y ESTADOS
+// ============================================
 const searchForm = document.getElementById('searchForm');
 const documentoInput = document.getElementById('documento');
 const documentoError = document.getElementById('documentoError');
 const resultadoUsuario = document.getElementById('resultadoUsuario');
 
+// Estados globales de la interfaz (Filtro y Orden)
+let criterioGlobal = "fecha"; 
+let estadoFiltroGlobal = "todos";
+
 // ============================================
-// 2. FUNCIONES AUXILIARES
+// 3. FUNCIONES DE RENDERIZADO Y LÓGICA
 // ============================================
+function actualizarPantalla(usuario, todasLasTareas) {
+    resultadoUsuario.innerHTML = "";
 
-function isValidInput(value) {
-    return value.trim().length > 0;
+    // 1. Aplicar filtro avanzado por estado
+    const tareasFiltradas = filtrarTareasPorEstado(todasLasTareas, estadoFiltroGlobal);
+    // 2. Aplicar ordenamiento dinámico
+    const tareasAMostrar = ordenarTareas(tareasFiltradas, criterioGlobal);
+
+    const card = createUserCard(
+        usuario,
+        todasLasTareas,   
+        tareasAMostrar,   
+        estadoFiltroGlobal,
+        criterioGlobal, 
+        
+        // Callback 1: Crear Tarea
+        (usuarioActual) => {
+            resultadoUsuario.innerHTML = ""; 
+            const form = renderTaskForm(
+                usuarioActual,
+                async (datos) => {
+                    try {
+                        const nuevasTareas = await procesarNuevaTarea(usuarioActual.id, datos.title, datos.body);
+                        actualizarPantalla(usuarioActual, nuevasTareas);
+                        showSuccessToast("Tarea creada correctamente"); 
+                    } catch (error) {
+                        showErrorToast("Error al crear la tarea");
+                    }
+                },
+                () => {
+                    actualizarPantalla(usuario, todasLasTareas);
+                }
+            );
+            resultadoUsuario.appendChild(form);
+        },
+        
+        // Callback 2: Editar Tarea
+        async (tarea) => {
+            const formEdit = document.createElement('div');
+            formEdit.innerHTML = `
+                <div class="form__group">
+                    <label class="form__label">Título</label>
+                    <input type="text" id="editTitle" class="form__input" value="${tarea.title}">
+                </div>
+                <div class="form__group" style="margin-top: 15px;">
+                    <label class="form__label">Descripción</label>
+                    <textarea id="editBody" class="form__input form__textarea">${tarea.body || ''}</textarea>
+                </div>
+            `;
+            
+            const confirmado = await showCustomModal("Editar Tarea", formEdit, true);
+            
+            if (confirmado) {
+                const nuevoTitulo = formEdit.querySelector('#editTitle').value.trim();
+                const nuevoBody = formEdit.querySelector('#editBody').value.trim();
+                
+                if (!nuevoTitulo) return showErrorToast("El título no puede estar vacío");
+                
+                try {
+                    const tareasActualizadas = await procesarActualizacion(tarea.id, usuario.id, { 
+                        title: nuevoTitulo, 
+                        body: nuevoBody 
+                    });
+                    actualizarPantalla(usuario, tareasActualizadas);
+                    showSuccessToast("Tarea actualizada correctamente");
+                } catch (error) {
+                    showErrorToast("Error al editar la tarea");
+                }
+            }
+        },
+        
+        // Callback 3: Cambiar Estado
+        async (tarea) => {
+            let nuevoEstado;
+            if (tarea.status === "pendiente") nuevoEstado = "en proceso";
+            else if (tarea.status === "en proceso") nuevoEstado = "completada";
+            else nuevoEstado = "pendiente";
+
+            try {
+                const tareasActualizadas = await procesarActualizacion(tarea.id, usuario.id, { 
+                    status: nuevoEstado 
+                });
+                actualizarPantalla(usuario, tareasActualizadas);
+                showInfoToast(`Tarea en estado: ${nuevoEstado}`);
+            } catch (error) {
+                showErrorToast("Error al cambiar el estado");
+            }
+        },
+        
+        // Callback 4: Eliminar Tarea
+        async (tarea) => {
+            const confirmado = await showConfirmModal("Eliminar Tarea", `¿Seguro que deseas borrar "${tarea.title}"?`);
+            if (confirmado) {
+                try {
+                    const nuevasTareas = await procesarEliminacion(tarea.id, usuario.id);
+                    actualizarPantalla(usuario, nuevasTareas);
+                    showSuccessToast("Tarea eliminada correctamente");
+                } catch (error) {
+                    showErrorToast("Error al eliminar la tarea");
+                }
+            }
+        },
+
+        // Callback 5: Filtrar por Estado
+        (nuevoFiltro) => {
+            estadoFiltroGlobal = nuevoFiltro;
+            actualizarPantalla(usuario, todasLasTareas);
+        },
+
+        // Callback 6: Ordenar
+        (nuevoCriterio) => {
+            criterioGlobal = nuevoCriterio;
+            actualizarPantalla(usuario, todasLasTareas);
+        }
+    );
+
+    resultadoUsuario.appendChild(card);
 }
 
-function showError(errorElement, message) {
-    errorElement.textContent = message;
-}
-
-function clearError(errorElement) {
-    errorElement.textContent = "";
-}
-
-function validateForm() {
-    const documento = documentoInput.value;
-    let isValid = true;
+// ============================================
+// 4. MANEJO DE EVENTOS (BÚSQUEDA)
+// ============================================
+searchForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const documento = documentoInput.value.trim();
 
     if (!isValidInput(documento)) {
         showError(documentoError, "El documento es obligatorio");
         documentoInput.classList.add("error");
-        isValid = false;
-    } else {
-        clearError(documentoError);
-        documentoInput.classList.remove("error");
-    }
-
-    return isValid;
-}
-
-// ============================================
-// 3. CREACIÓN DE ELEMENTOS
-// ============================================
-
-function createUserCard(usuario, tareas) {
-    const total = tareas.length;
-    const pendientes = tareas.filter(t => t.status === "pendiente").length;
-    const completadas = tareas.filter(t => t.status === "completada").length;
-
-    const card = document.createElement("div");
-    card.classList.add("user-card");
-
-    card.innerHTML = `
-        <h3>${usuario.name}</h3>
-        <p><strong>Documento:</strong> ${usuario.document}</p>
-        <p><strong>Correo:</strong> ${usuario.email}</p>
-        <p><strong>Total tareas:</strong> ${total}</p>
-        <p><strong>Pendientes:</strong> ${pendientes}</p>
-        <p><strong>Completadas:</strong> ${completadas}</p>
-        <button class="btn btn--secondary" id="crearTareaBtn">Crear tarea</button>
-    `;
-
-    // Contenedor de tareas
-    const tareasContainer = document.createElement("div");
-    tareasContainer.classList.add("tasks-container");
-
-    const tareasTitle = document.createElement("h4");
-    tareasTitle.textContent = "Listado de tareas";
-    tareasContainer.appendChild(tareasTitle);
-
-    if (tareas.length === 0) {
-        const noTask = document.createElement("p");
-        noTask.textContent = "No hay tareas registradas.";
-        tareasContainer.appendChild(noTask);
-    } else {
-        tareas.forEach(t => {
-            const taskItem = document.createElement("div");
-            taskItem.classList.add("task-item");
-
-            taskItem.classList.add(t.status); // añade "pendiente" o "completada"
-
-            const taskText = document.createElement("p");
-            taskText.innerHTML = `<strong>${t.title}</strong> - ${t.status}`;
-
-            const deleteBtn = document.createElement("button");
-            deleteBtn.classList.add("btn", "btn--danger");
-            deleteBtn.textContent = "Eliminar";
-            deleteBtn.addEventListener("click", () => deleteTask(t.id, usuario.id));
-
-            // Botón alternar estado (Completar ↔ Pendiente)
-            const toggleBtn = crearBotonToggle(t.id, usuario.id, t.status);
-
-            taskItem.appendChild(taskText);
-            taskItem.appendChild(deleteBtn);
-            taskItem.appendChild(toggleBtn);
-            tareasContainer.appendChild(taskItem);
-        });
-    }
-
-    card.appendChild(tareasContainer);
-
-    resultadoUsuario.innerHTML = "";
-    resultadoUsuario.appendChild(card);
-
-    const crearTareaBtn = document.getElementById("crearTareaBtn");
-    crearTareaBtn.addEventListener("click", () => {
-        renderTaskForm(usuario);
-    });
-}
-
-/**
- * Renderiza un formulario dinámico para crear una nueva tarea
- * @param {Object} usuario - Datos del usuario
- */
-function renderTaskForm(usuario) {
-    const form = document.createElement("form");
-    form.classList.add("form");
-
-    form.innerHTML = `
-        <div class="form__group">
-            <label for="taskTitle" class="form__label">Título de la tarea</label>
-            <input type="text" id="taskTitle" class="form__input" placeholder="Ingresa el título">
-        </div>
-        <div class="form__group">
-            <label for="taskBody" class="form__label">Descripción</label>
-            <textarea id="taskBody" class="form__input form__textarea" placeholder="Ingresa la descripción"></textarea>
-        </div>
-        <button type="submit" class="btn btn--primary">Guardar tarea</button>
-    `;
-
-    resultadoUsuario.appendChild(form);
-
-    form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const title = document.getElementById("taskTitle").value.trim();
-        const body = document.getElementById("taskBody").value.trim();
-
-        if (!title || !body) {
-            alert("Todos los campos son obligatorios");
-            return;
-        }
-
-        try {
-            await fetch("http://localhost:3000/tasks", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    userId: usuario.id,
-                    title,
-                    body,
-                    status: "pendiente"
-                })
-            });
-
-            const responseTasks = await fetch(`http://localhost:3000/tasks?userId=${usuario.id}`);
-            const tareas = await responseTasks.json();
-            createUserCard(usuario, tareas);
-
-        } catch (error) {
-            resultadoUsuario.innerHTML += `
-                <div class="error-card">
-                    <p>Error al crear la tarea.</p>
-                </div>
-            `;
-        }
-    });
-}
-
-/**
- * Elimina una tarea existente
- * @param {number} taskId - ID de la tarea
- * @param {number} userId - ID del usuario
- */
-async function deleteTask(taskId, userId) {
-    try {
-        await fetch(`http://localhost:3000/tasks/${taskId}`, { method: "DELETE" });
-
-        const responseTasks = await fetch(`http://localhost:3000/tasks?userId=${userId}`);
-        const tareas = await responseTasks.json();
-
-        const responseUser = await fetch(`http://localhost:3000/users/${userId}`);
-        const usuario = await responseUser.json();
-
-        createUserCard(usuario, tareas);
-    } catch (error) {
-        resultadoUsuario.innerHTML += `
-            <div class="error-card">
-                <p>Error al eliminar la tarea.</p>
-            </div>
-        `;
-    }
-}
-
-
-function crearBotonToggle(taskId, userId, currentStatus) {
-    const boton = document.createElement("button");
-    boton.classList.add("btn", "btn--success");
-
-    // Texto inicial según estado
-    boton.textContent = currentStatus === "pendiente" ? "Completar" : "Pendiente";
-
-    boton.addEventListener("click", async () => {
-        try {
-            const nuevoEstado = currentStatus === "pendiente" ? "completada" : "pendiente";
-
-            await fetch(`http://localhost:3000/tasks/${taskId}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ status: nuevoEstado })
-            });
-
-            const responseTasks = await fetch(`http://localhost:3000/tasks?userId=${userId}`);
-            const tareas = await responseTasks.json();
-
-            const responseUser = await fetch(`http://localhost:3000/users/${userId}`);
-            const usuario = await responseUser.json();
-
-            createUserCard(usuario, tareas);
-
-        } catch (error) {
-            alert("Error al actualizar la tarea");
-            console.error(error);
-        }
-    });
-
-    return boton;
-}
-
-// ============================================
-// 4. MANEJO DE EVENTOS
-// ============================================
-
-async function handleFormSubmit(event) {
-    event.preventDefault();
-
-    if (!validateForm()) {
         return;
     }
 
-    const documento = documentoInput.value.trim();
+    // Al buscar un nuevo usuario, se reinician los controles a su estado por defecto
+    estadoFiltroGlobal = "todos";
+    criterioGlobal = "fecha";
 
     try {
-        const response = await fetch(`http://localhost:3000/users?document=${documento}`);
-        const usuarios = await response.json();
-
-        if (usuarios.length === 0) {
-            resultadoUsuario.innerHTML = `
-                <div class="error-card">
-                    <p>No se encontró ningún usuario con el documento "${documento}".</p>
-                </div>
-            `;
-            return;
-        }
-
-        const usuario = usuarios[0];
-        const responseTasks = await fetch(`http://localhost:3000/tasks?userId=${usuario.id}`);
-        const tareas = await responseTasks.json();
-
-        createUserCard(usuario, tareas);
-
+        const { usuario, tareas } = await procesarBusqueda(documento);
+        actualizarPantalla(usuario, tareas);
+        showSuccessToast(`Hola, ${usuario.name}`);
     } catch (error) {
-        resultadoUsuario.innerHTML = `
-            <div class="error-card">
-                <p>Error al consultar el servidor.</p>
-            </div>
-        `;
+        resultadoUsuario.innerHTML = "";
+        resultadoUsuario.appendChild(createErrorCard(error.message));
+        showErrorToast("Error en la búsqueda");
     }
-}
+});
 
-// ============================================
-// 5. REGISTRO DE EVENTOS
-// ============================================
-
-searchForm.addEventListener('submit', handleFormSubmit);
-documentoInput.addEventListener('input', () => clearError(documentoError));
-
-// ============================================
-// 7. INICIALIZACIÓN (OPCIONAL)
-// ============================================
-
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('✅ DOM completamente cargado');
-    console.log('📝 Aplicación de registro de mensajes iniciada');
+documentoInput.addEventListener('input', () => {
+    clearError(documentoError);
+    documentoInput.classList.remove("error");
 });
