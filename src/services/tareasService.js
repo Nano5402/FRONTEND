@@ -1,5 +1,5 @@
 import { fetchUsuarioPorDocumento } from '../api/usuariosApi.js';
-import { fetchTareasPorUsuario, crearTarea, eliminarTarea, actualizarTareaApi } from '../api/tareasApi.js';
+import { fetchTareasPorUsuario, crearTarea, eliminarTarea, actualizarTarea } from '../api/tareasApi.js';
 
 export async function procesarBusqueda(documento) {
     const usuario = await fetchUsuarioPorDocumento(documento);
@@ -14,7 +14,7 @@ export async function procesarNuevaTarea(userId, title, body) {
 }
 
 export async function procesarActualizacion(taskId, userId, datosNuevos) {
-    await actualizarTareaApi(taskId, datosNuevos);
+    await actualizarTarea(taskId, datosNuevos);
     return await fetchTareasPorUsuario(userId); 
 }
 

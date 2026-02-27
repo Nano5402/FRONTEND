@@ -4,7 +4,7 @@
  * ============================================
  * * Objetivo: Aplicar conceptos del DOM para seleccionar elementos,
  * responder a eventos y crear nuevos elementos dinámicamente.
- * * Autor: Paulo Pacheco, Ana Isabella Garcia Rozo, Fernando Andrés Rodríguez Salamanca
+ * * Autor: Andrés Santiago, Ana Isabella Garcia Rozo, Fernando Andrés Rodríguez Salamanca
  * Fecha: 11/02/26
  * ============================================
  */
@@ -13,10 +13,15 @@
 // 1. IMPORTACIONES GLOBALES
 // ============================================
 import { isValidInput, showError, clearError } from './utils/domHelpers.js';
+// Asegúrate de que tareasService exporte 'actualizarTarea' o ajusta el nombre aquí según corresponda
 import { procesarBusqueda, procesarNuevaTarea, procesarEliminacion, procesarActualizacion, ordenarTareas, filtrarTareasPorEstado } from './services/tareasService.js';
 import { createUserCard, renderTaskForm, createErrorCard } from './ui/tareasView.js';
 import { showSuccessToast, showErrorToast, showInfoToast } from './ui/components/toast.js';
 import { showConfirmModal, showCustomModal } from './ui/components/modal.js';
+
+// --- INTEGRACIÓN RF04 (EXPORTACIÓN) ---
+import { prepararExportacion } from './api/tareasApi.js';
+import { descargarJSON, crearBotonExportar } from './ui/exportUI.js';
 
 // ============================================
 // 2. SELECCIÓN DE ELEMENTOS DEL DOM Y ESTADOS
@@ -36,9 +41,9 @@ let estadoFiltroGlobal = "todos";
 function actualizarPantalla(usuario, todasLasTareas) {
     resultadoUsuario.innerHTML = "";
 
-    // 1. Aplicar filtro avanzado por estado
+    // 1. Aplicar filtro avanzado por estado (RF01)
     const tareasFiltradas = filtrarTareasPorEstado(todasLasTareas, estadoFiltroGlobal);
-    // 2. Aplicar ordenamiento dinámico
+    // 2. Aplicar ordenamiento dinámico (RF02)
     const tareasAMostrar = ordenarTareas(tareasFiltradas, criterioGlobal);
 
     const card = createUserCard(
@@ -148,6 +153,31 @@ function actualizarPantalla(usuario, todasLasTareas) {
             actualizarPantalla(usuario, todasLasTareas);
         }
     );
+
+    // ============================================================
+    // INTEGRACIÓN RF04: BOTÓN DE EXPORTAR
+    // ============================================================
+    
+    // 1. Generar el botón usando el módulo UI de Fernando
+    const btnExportar = crearBotonExportar();
+
+    // 2. Asignar el evento click
+    // Al estar DENTRO de actualizarPantalla, 'todasLasTareas' y 'usuario' existen y están actualizados
+    btnExportar.onclick = () => {
+        // Preparamos los datos (Módulo API)
+        const jsonString = prepararExportacion(todasLasTareas, usuario);
+        // Generamos el nombre del archivo
+        const nombreArchivo = `tareas_${usuario.document}.json`;
+        // Descargamos (Módulo UI)
+        descargarJSON(jsonString, nombreArchivo);
+        showInfoToast("Descarga iniciada...");
+    };
+
+    // 3. Insertar el botón dentro de la tarjeta del usuario
+    // Se agrega al final de la tarjeta para mantener el orden visual
+    card.appendChild(btnExportar);
+
+    // ============================================================
 
     resultadoUsuario.appendChild(card);
 }
