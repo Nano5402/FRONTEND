@@ -403,3 +403,26 @@ body {
     justify-content: flex-start;
   }
 }
+/* ============================================================
+   RF04 — BOTÓN EXPORTAR JSON
+   ============================================================ */
+
+.btn--export {
+    background-color: var(--color-warning);
+    color: white;
+    box-shadow: var(--shadow-sm);
+    margin-top: var(--spacing-sm);
+    margin-left: var(--spacing-sm);
+    transition: all var(--transition-base);
+}
+
+.btn--export:hover {
+    background-color: #d97706;
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+}
+
+.btn--export:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm);
+}
