@@ -4,6 +4,13 @@
 /**
  * Retorna el contenedor de toasts. Si no existe, lo crea.
  */
+/**
+ * @deprecated desde v3.0.0
+ * Reemplazado por notificaciones.js que usa Notyf (npm).
+ * Se conserva como referencia histórica del sprint anterior.
+ */
+
+
 export function getToastContainer() {
     let container = document.getElementById('toast-container');
 
