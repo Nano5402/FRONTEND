@@ -5,6 +5,8 @@
 // ============================================================
 // 1) IMPORTACIONES
 // ============================================================
+
+import { showSuccessToast, showErrorToast, showInfoToast, showWarningToast } from './ui/components/notificaciones.js';
 import { isValidInput, showError, clearError } from './utils/domHelpers.js';
 import {
     procesarBusqueda,
@@ -15,7 +17,6 @@ import {
     filtrarTareasPorEstado
 } from './services/tareasService.js';
 import { createUserCard, renderTaskForm, createErrorCard } from './ui/tareasView.js';
-import { showSuccessToast, showErrorToast, showInfoToast } from './ui/components/toast.js';
 import { showConfirmModal, showCustomModal } from './ui/components/modal.js';
 import { prepararExportacion } from './api/index.js';
 import { descargarJSON } from './ui/exportUI.js';
