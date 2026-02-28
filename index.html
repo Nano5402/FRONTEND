@@ -1,18 +1,25 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
+  <!-- Configuración base del documento -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Título mostrado en la pestaña del navegador -->
   <title>Búsqueda de Usuario - Gestión de Tareas</title>
+
+  <!-- Hoja de estilos principal de la interfaz -->
   <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
   <div class="container">
+    <!-- Encabezado principal de la aplicación -->
     <header class="header">
       <h1 class="header__title">Gestión de Tareas</h1>
       <p class="header__subtitle">Consulta de usuarios y sus tareas</p>
     </header>
 
+    <!-- Formulario para buscar usuario por documento -->
     <section class="form-section">
       <div class="card">
         <h2 class="card__title">Buscar Usuario</h2>
@@ -27,17 +34,19 @@
       </div>
     </section>
 
+    <!-- Zona donde se muestran los resultados de búsqueda -->
     <section class="results-section">
       <h2 class="results-title">Resultados</h2>
-      <div id="resultadoUsuario" class="results-container">
-        </div>
+      <div id="resultadoUsuario" class="results-container"></div>
     </section>
 
+    <!-- Pie de página informativo -->
     <footer class="footer">
       <p class="footer__text">Ejercicio DOM + API | SENA</p>
     </footer>
   </div>
 
+  <!-- Script principal en modo módulo -->
   <script type="module" src="src/script.js"></script>
 </body>
 </html>

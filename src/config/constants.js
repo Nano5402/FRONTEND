@@ -1,4 +1,5 @@
-// src/config/constants.js
+﻿// src/config/constants.js
+// Este archivo centraliza valores fijos que usa toda la aplicación.
+// Si cambia la URL del servidor, se ajusta aquí y no en múltiples archivos.
 
-// La URL base del servidor. Es el único lugar donde aparece "localhost:3000"
 export const API_URL = "http://localhost:3000";

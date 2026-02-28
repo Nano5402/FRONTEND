@@ -1,20 +1,23 @@
+﻿// src/api/usuariosApi.js
+// Capa de acceso a datos de usuarios.
+// Este archivo consulta el servidor y no manipula elementos del DOM.
+
 import { API_URL } from '../config/constants.js';
 
 /**
- * Busca un usuario por su número de documento
+ * Busca un usuario usando su documento de identidad.
+ * Retorna el primer usuario encontrado o null si no existe.
  */
 export async function fetchUsuarioPorDocumento(documento) {
-    const urlExacta = `${API_URL}/users?document=${documento}`;
-    
-    // 1. Espía de la URL
-    console.log("🔥 BUSCANDO EN ESTA URL EXACTA:", urlExacta);
-    
-    const response = await fetch(urlExacta);
+    const response = await fetch(`${API_URL}/users?document=${documento}`);
     const usuarios = await response.json();
-    
-    // 2. Espía de la Respuesta
-    console.log("📦 RESPUESTA DEL SERVIDOR:", usuarios);
-    
-    if (usuarios.length === 0) return null;
-    return usuarios[0];
+    return usuarios.length > 0 ? usuarios[0] : null;
+}
+
+/**
+ * Obtiene un usuario por su identificador interno.
+ */
+export async function fetchUsuarioPorId(userId) {
+    const response = await fetch(`${API_URL}/users/${userId}`);
+    return await response.json();
 }
