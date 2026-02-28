@@ -1,44 +1,38 @@
-// src/ui/exportUI.js
-// RESPONSABILIDAD: funciones de interfaz para RF04
-// Estas funciones SÍ tocan el DOM — por eso viven aquí y no en api/
+﻿// src/ui/exportUI.js
+// Funciones de interfaz para la exportación de tareas en JSON.
 
 /**
- * RF04 - Descarga un string JSON como archivo .json en el navegador
- * Usa Blob y createElement — manipulación directa del DOM
- * 
- * @param {string} contenidoJSON - El string JSON ya preparado
- * @param {string} nombreArchivo  - Nombre que tendrá el archivo descargado
+ * Descarga un texto JSON como archivo en el navegador.
+ * Entrada: contenido ya formateado y nombre del archivo.
  */
 export function descargarJSON(contenidoJSON, nombreArchivo) {
-    // Paso 1: crear un "archivo" en la memoria del navegador
+    // 1) Crear un archivo temporal en memoria.
     const blob = new Blob([contenidoJSON], { type: 'application/json' });
 
-    // Paso 2: crear URL temporal que apunta a ese archivo en memoria
+    // 2) Crear una URL temporal para ese archivo.
     const urlTemporal = URL.createObjectURL(blob);
 
-    // Paso 3: crear un enlace invisible con esa URL
+    // 3) Crear un enlace oculto y disparar la descarga.
     const enlace = document.createElement('a');
-    enlace.href     = urlTemporal;
+    enlace.href = urlTemporal;
     enlace.download = nombreArchivo;
 
-    // Paso 4: insertar, simular clic y eliminar
     document.body.appendChild(enlace);
     enlace.click();
     document.body.removeChild(enlace);
 
-    // Paso 5: liberar la memoria del navegador
+    // 4) Liberar la URL temporal para evitar uso extra de memoria.
     URL.revokeObjectURL(urlTemporal);
 }
 
 /**
- * RF04 - Crea y devuelve el botón exportar listo para insertar en el DOM
- * @returns {HTMLButtonElement} - El botón construido
+ * Crea el botón "Exportar JSON" listo para insertarlo en el DOM.
  */
 export function crearBotonExportar() {
-    const boton       = document.createElement('button');
-    boton.type        = 'button';
+    const boton = document.createElement('button');
+    boton.type = 'button';
     boton.classList.add('btn', 'btn--export');
-    boton.id          = 'exportarTareasBtn';
+    boton.id = 'exportarTareasBtn';
     boton.textContent = '⬇ Exportar JSON';
     return boton;
 }

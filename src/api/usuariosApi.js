@@ -1,13 +1,12 @@
-// src/api/usuariosApi.js
-// RESPONSABILIDAD: comunicación con el servidor para usuarios
-// REGLA: ninguna línea toca el DOM — sin document, sin innerHTML
+﻿// src/api/usuariosApi.js
+// Capa de acceso a datos de usuarios.
+// Este archivo consulta el servidor y no manipula elementos del DOM.
 
 import { API_URL } from '../config/constants.js';
 
 /**
- * Busca un usuario por su número de documento
- * @param {string} documento - Documento a buscar
- * @returns {Object|null} - Usuario encontrado o null
+ * Busca un usuario usando su documento de identidad.
+ * Retorna el primer usuario encontrado o null si no existe.
  */
 export async function fetchUsuarioPorDocumento(documento) {
     const response = await fetch(`${API_URL}/users?document=${documento}`);
@@ -16,9 +15,7 @@ export async function fetchUsuarioPorDocumento(documento) {
 }
 
 /**
- * Busca un usuario por su ID
- * @param {number} userId - ID del usuario
- * @returns {Object} - Datos del usuario
+ * Obtiene un usuario por su identificador interno.
  */
 export async function fetchUsuarioPorId(userId) {
     const response = await fetch(`${API_URL}/users/${userId}`);

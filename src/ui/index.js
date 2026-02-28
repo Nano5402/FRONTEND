@@ -1,5 +1,4 @@
-// // src/ui/index.js
-// // Puerta de entrada del módulo UI
-// // Quien necesite funciones de interfaz importa desde aquí
+// src/ui/index.js
+// Punto unico de exportacion para utilidades de interfaz.
 
-// export { descargarJSON, crearBotonExportar } from './exportUI.js';
+export { descargarJSON, crearBotonExportar } from './exportUI.js';

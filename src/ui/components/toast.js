@@ -1,31 +1,34 @@
-/**
- * ============================================
- * TOAST.JS - Componente de notificaciones
- * ============================================
- */
+﻿// src/ui/components/toast.js
+// Componente para notificaciones breves en pantalla.
 
+/**
+ * Retorna el contenedor de toasts. Si no existe, lo crea.
+ */
 export function getToastContainer() {
-    let container = document.getElementById("toast-container");
-    
+    let container = document.getElementById('toast-container');
+
     if (!container) {
-        container = document.createElement("div");
-        container.id = "toast-container";
-        container.classList.add("toast-container"); 
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.classList.add('toast-container');
         document.body.appendChild(container);
     }
-    
+
     return container;
 }
 
-export function showToast(mensaje, tipo = "toast--info", duracion = 3000) {
+/**
+ * Muestra una notificación y la elimina después del tiempo indicado.
+ */
+export function showToast(mensaje, tipo = 'toast--info', duracion = 3000) {
     const container = getToastContainer();
 
-    const toast = document.createElement("div");
-    toast.classList.add("toast", tipo);
-    toast.style.pointerEvents = "auto";
+    const toast = document.createElement('div');
+    toast.classList.add('toast', tipo);
+    toast.style.pointerEvents = 'auto';
 
-    const mensajeEl = document.createElement("div");
-    mensajeEl.classList.add("toast__message");
+    const mensajeEl = document.createElement('div');
+    mensajeEl.classList.add('toast__message');
     mensajeEl.textContent = mensaje;
 
     toast.appendChild(mensajeEl);
@@ -33,7 +36,7 @@ export function showToast(mensaje, tipo = "toast--info", duracion = 3000) {
 
     if (duracion > 0) {
         setTimeout(() => {
-            toast.classList.add("fade-out-toast"); 
+            toast.classList.add('fade-out-toast');
             setTimeout(() => {
                 toast.remove();
             }, 200);
@@ -43,18 +46,21 @@ export function showToast(mensaje, tipo = "toast--info", duracion = 3000) {
     return toast;
 }
 
+/**
+ * Atajos para tipos de toast comunes.
+ */
 export function showSuccessToast(mensaje, duracion = 3000) {
-    return showToast(mensaje, "toast--success", duracion);
+    return showToast(mensaje, 'toast--success', duracion);
 }
 
 export function showErrorToast(mensaje, duracion = 3000) {
-    return showToast(mensaje, "toast--error", duracion);
+    return showToast(mensaje, 'toast--error', duracion);
 }
 
 export function showWarningToast(mensaje, duracion = 3000) {
-    return showToast(mensaje, "toast--warning", duracion);
+    return showToast(mensaje, 'toast--warning', duracion);
 }
 
 export function showInfoToast(mensaje, duracion = 3000) {
-    return showToast(mensaje, "toast--info", duracion);
+    return showToast(mensaje, 'toast--info', duracion);
 }

@@ -1,0 +1,6 @@
+# Dependencias — no se suben al repositorio
+node_modules/
+
+# Carpeta de producción — se genera con npm run build
+dist/
+
