@@ -1,14 +1,11 @@
-// src/api/tareasApi.js
-// RESPONSABILIDAD: comunicación con el servidor para tareas
-// + preparación de datos para exportación (RF04)
-// REGLA: ninguna línea toca el DOM — sin document, sin innerHTML
+﻿// src/api/tareasApi.js
+// Capa de acceso a datos de tareas.
+// Aquí se hacen peticiones al servidor y transformaciones de datos para exportar.
 
 import { API_URL } from '../config/constants.js';
 
 /**
- * Obtiene todas las tareas de un usuario
- * @param {number} userId - ID del usuario
- * @returns {Array} - Lista de tareas
+ * Trae todas las tareas de un usuario.
  */
 export async function fetchTareasPorUsuario(userId) {
     const response = await fetch(`${API_URL}/tasks?userId=${userId}`);
@@ -16,11 +13,7 @@ export async function fetchTareasPorUsuario(userId) {
 }
 
 /**
- * Crea una nueva tarea en el servidor
- * @param {number} userId - ID del usuario dueño
- * @param {string} title  - Título de la tarea
- * @param {string} body   - Descripción de la tarea
- * @returns {Object} - La tarea recién creada
+ * Crea una tarea nueva para un usuario.
  */
 export async function crearTarea(userId, title, body) {
     const response = await fetch(`${API_URL}/tasks`, {
@@ -37,9 +30,8 @@ export async function crearTarea(userId, title, body) {
 }
 
 /**
- * Elimina una tarea por su ID
- * @param {number} taskId - ID de la tarea a eliminar
- * @returns {boolean} - true si se eliminó correctamente
+ * Elimina una tarea por su ID.
+ * Retorna true cuando el servidor confirma la eliminación.
  */
 export async function eliminarTarea(taskId) {
     const response = await fetch(`${API_URL}/tasks/${taskId}`, {
@@ -49,10 +41,7 @@ export async function eliminarTarea(taskId) {
 }
 
 /**
- * Actualiza campos de una tarea existente
- * @param {number} taskId - ID de la tarea
- * @param {Object} campos - Campos a actualizar ej: { status, title, body }
- * @returns {Object} - La tarea actualizada
+ * Actualiza uno o varios campos de una tarea.
  */
 export async function actualizarTarea(taskId, campos) {
     const response = await fetch(`${API_URL}/tasks/${taskId}`, {
@@ -63,36 +52,29 @@ export async function actualizarTarea(taskId, campos) {
     return await response.json();
 }
 
-// ============================================================
-// RF04 — PREPARACIÓN DE DATOS PARA EXPORTACIÓN
-// Vive aquí porque es transformación pura de datos
-// No tiene document, innerHTML ni contacto con el DOM
-// ============================================================
-
 /**
- * RF04 - Prepara los datos de tareas para exportación en JSON
- * @param {Array}  tareas  - Array de tareas visibles en pantalla
- * @param {Object} usuario - Datos del usuario dueño de las tareas
- * @returns {string} - String JSON formateado listo para guardar
+ * Prepara un JSON legible con tareas y resumen general.
+ * Entrada: tareas visibles y datos del usuario.
+ * Salida: texto JSON listo para descargar.
  */
 export function prepararExportacion(tareas, usuario) {
     const exportData = {
         exportadoEn: new Date().toISOString(),
         usuario: {
-            id:        usuario.id,
-            nombre:    usuario.name,
+            id: usuario.id,
+            nombre: usuario.name,
             documento: usuario.document,
-            correo:    usuario.email
+            correo: usuario.email
         },
         resumen: {
             totalTareas: tareas.length,
-            pendientes:  tareas.filter(t => t.status === "pendiente").length,
-            enProceso:   tareas.filter(t => t.status === "en proceso").length,
-            completadas: tareas.filter(t => t.status === "completada").length
+            pendientes: tareas.filter((t) => t.status === "pendiente").length,
+            enProceso: tareas.filter((t) => t.status === "en proceso").length,
+            completadas: tareas.filter((t) => t.status === "completada").length
         },
         tareas: tareas
     };
 
-    // null, 2 → agrega sangría para que el archivo sea legible por humanos
+    // null, 2 agrega sangría para que el archivo sea fácil de leer.
     return JSON.stringify(exportData, null, 2);
 }

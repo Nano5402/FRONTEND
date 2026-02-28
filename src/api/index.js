@@ -1,6 +1,6 @@
 // src/api/index.js
-// Puerta de entrada única del módulo API
-// Quien necesite datos del servidor importa desde aquí
+// Punto unico de exportacion para funciones de API.
+// Permite importar desde un solo archivo.
 
 export {
     fetchUsuarioPorDocumento,
@@ -12,7 +12,5 @@ export {
     crearTarea,
     eliminarTarea,
     actualizarTarea,
-    prepararExportacion   // RF04
+    prepararExportacion
 } from './tareasApi.js';
-
-export { descargarJSON, crearBotonExportar } from './exportUI.js';
