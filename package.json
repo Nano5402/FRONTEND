@@ -1,8 +1,8 @@
-{
+﻿{
   "name": "gestion-tareas-sena",
   "version": "1.0.0",
-  "description": "Ejercicio DOM + API - SENA - RF04 Exportación de tareas",
-  "author": "Fernando Andrés Rodríguez Salamanca",
+  "description": "Ejercicio DOM + API - SENA - RF04 ExportaciÃ³n de tareas",
+  "author": "Andres Santiago Calvete, Ana Isabella Rozo, Fernando Rodriguez",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,5 +11,9 @@
   },
   "devDependencies": {
     "vite": "^5.0.0"
+  },
+  "dependencies": {
+    "notyf": "^3.10.0"
   }
 }
+

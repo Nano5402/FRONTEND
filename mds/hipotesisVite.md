@@ -1,12 +1,12 @@
-# Hipótesis de Implementación — Migración a Vite
+﻿# HipÃ³tesis de ImplementaciÃ³n â€” MigraciÃ³n a Vite
 
-**Autor:** Fernando Andrés Rodríguez Salamanca
+**Autores:** Andres Santiago Calvete, Ana Isabella Rozo, Fernando Rodriguez
 **Fecha:** 28/02/2026
 **Rama:** feature/api-fer
 
 ---
 
-## 1. Análisis de la estructura actual
+## 1. AnÃ¡lisis de la estructura actual
 
 El proyecto actualmente usa ES Modules nativos del navegador
 cargados directamente desde index.html con:
@@ -14,72 +14,73 @@ cargados directamente desde index.html con:
 
 Esto funciona pero tiene limitaciones:
 
-- Cada archivo JS genera una petición HTTP separada
-- No hay recarga automática al guardar cambios
-- No hay optimización del código para producción
+- Cada archivo JS genera una peticiÃ³n HTTP separada
+- No hay recarga automÃ¡tica al guardar cambios
+- No hay optimizaciÃ³n del cÃ³digo para producciÃ³n
 - Requiere un servidor local manual (Live Server)
 
 ---
 
-## 2. ¿Qué archivos deberán reorganizarse?
+## 2. Â¿QuÃ© archivos deberÃ¡n reorganizarse?
 
-| Archivo/Carpeta   | Acción          | Razón                                |
+| Archivo/Carpeta   | AcciÃ³n          | RazÃ³n                                |
 | ----------------- | ---------------- | ------------------------------------- |
-| index.html        | Permanece        | Vite lo toma desde la raíz           |
+| index.html        | Permanece        | Vite lo toma desde la raÃ­z           |
 | src/script.js     | Permanece        | Ya es el punto de entrada JS          |
-| assets/styles.css | Permanece        | Vite procesa assets automáticamente  |
+| assets/styles.css | Permanece        | Vite procesa assets automÃ¡ticamente  |
 | package.json      | NUEVO            | Gestiona dependencias y scripts       |
-| vite.config.js    | NUEVO            | Configuración de Vite                |
+| vite.config.js    | NUEVO            | ConfiguraciÃ³n de Vite                |
 | node_modules/     | NUEVO            | Dependencias instaladas por npm       |
-| dist/             | NUEVO (al build) | Archivos optimizados para producción |
+| dist/             | NUEVO (al build) | Archivos optimizados para producciÃ³n |
 
 ---
 
-## 3. ¿Qué nuevos archivos aparecerán?
+## 3. Â¿QuÃ© nuevos archivos aparecerÃ¡n?
 
-- `package.json` — cerebro del proyecto Node.js
-- `package-lock.json` — versiones exactas de dependencias
-- `vite.config.js` — configuración del empaquetador
-- `node_modules/` — carpeta con Vite y sus dependencias
-- `dist/` — carpeta generada al ejecutar npm run build
+- `package.json` â€” cerebro del proyecto Node.js
+- `package-lock.json` â€” versiones exactas de dependencias
+- `vite.config.js` â€” configuraciÃ³n del empaquetador
+- `node_modules/` â€” carpeta con Vite y sus dependencias
+- `dist/` â€” carpeta generada al ejecutar npm run build
 
 ---
 
-## 4. ¿Cómo cambiará la forma de ejecutar el proyecto?
+## 4. Â¿CÃ³mo cambiarÃ¡ la forma de ejecutar el proyecto?
 
-| Antes                        | Después                |
+| Antes                        | DespuÃ©s                |
 | ---------------------------- | ----------------------- |
 | Abrir con Live Server        | npm run dev             |
-| Puerto 5501 manual           | Puerto 5173 automático |
-| Sin recarga automática real | Hot Module Replacement  |
-| Sin optimización            | Bundle optimizado       |
+| Puerto 5501 manual           | Puerto 5173 automÃ¡tico |
+| Sin recarga automÃ¡tica real | Hot Module Replacement  |
+| Sin optimizaciÃ³n            | Bundle optimizado       |
 
 ---
 
-## 5. ¿Qué ventajas técnicas obtendrá la aplicación?
+## 5. Â¿QuÃ© ventajas tÃ©cnicas obtendrÃ¡ la aplicaciÃ³n?
 
 1. **HMR (Hot Module Replacement):** los cambios se ven en el
-   navegador sin recargar la página completa
-2. **Bundle optimizado:** en producción, todos los JS se unen
-   y minimizan en archivos más pequeños
-3. **Gestión de dependencias:** con npm se pueden instalar
-   librerías externas fácilmente
-4. **Separación dev/prod:** entorno de desarrollo rápido y
-   entorno de producción optimizado
-5. **Resolución de rutas:** Vite maneja automáticamente las
-   rutas relativas entre módulos
+   navegador sin recargar la pÃ¡gina completa
+2. **Bundle optimizado:** en producciÃ³n, todos los JS se unen
+   y minimizan en archivos mÃ¡s pequeÃ±os
+3. **GestiÃ³n de dependencias:** con npm se pueden instalar
+   librerÃ­as externas fÃ¡cilmente
+4. **SeparaciÃ³n dev/prod:** entorno de desarrollo rÃ¡pido y
+   entorno de producciÃ³n optimizado
+5. **ResoluciÃ³n de rutas:** Vite maneja automÃ¡ticamente las
+   rutas relativas entre mÃ³dulos
 
 ```
 
 ---
 
-# PUNTO 2 — Migración a Vite
+# PUNTO 2 â€” MigraciÃ³n a Vite
 
-## El flujo natural de la migración
+## El flujo natural de la migraciÃ³n
 ```
 
-1. npm init        → crea package.json
-2. npm install     → instala Vite en node_modules
-3. Crear vite.config.js → le decimos a Vite cómo trabajar
-4. Ajustar index.html   → pequeño cambio en el script tag
-5. npm run dev     → servidor de desarrollo listo
+1. npm init        â†’ crea package.json
+2. npm install     â†’ instala Vite en node_modules
+3. Crear vite.config.js â†’ le decimos a Vite cÃ³mo trabajar
+4. Ajustar index.html   â†’ pequeÃ±o cambio en el script tag
+5. npm run dev     â†’ servidor de desarrollo listo
+
