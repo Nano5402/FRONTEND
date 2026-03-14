@@ -1,16 +1,2 @@
-// src/api/index.js
-// Punto unico de exportacion para funciones de API.
-// Permite importar desde un solo archivo.
-
-export {
-    fetchUsuarioPorDocumento,
-    fetchUsuarioPorId
-} from './usuariosApi.js';
-
-export {
-    fetchTareasPorUsuario,
-    crearTarea,
-    eliminarTarea,
-    actualizarTarea,
-    prepararExportacion
-} from './tareasApi.js';
+export { fetchUsuarioPorDocumento, fetchUsuarioPorId, fetchTodosLosUsuarios } from './usuariosApi.js';
+export { fetchTareasPorUsuario, eliminarTarea, actualizarTarea, prepararExportacion, fetchTodasLasTareas, crearTareaMultiple } from './tareasApi.js';

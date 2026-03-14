@@ -1,211 +1,224 @@
 // src/script.js
-// Archivo principal de la aplicacion.
-// Coordina eventos de la interfaz, servicios y renderizado en pantalla.
-
-// ============================================================
-// 1) IMPORTACIONES
-// ============================================================
-
-import { showSuccessToast, showErrorToast, showInfoToast, showWarningToast } from './ui/components/notificaciones.js';
+import Swal from 'sweetalert2';
+import { showSuccessToast, showErrorToast } from './ui/components/notificaciones.js';
 import { isValidInput, showError, clearError } from './utils/domHelpers.js';
-import {
-    procesarBusqueda,
-    procesarNuevaTarea,
-    procesarEliminacion,
-    procesarActualizacion,
-    ordenarTareas,
-    filtrarTareasPorEstado
-} from './services/tareasService.js';
-import { createUserCard, renderTaskForm, createErrorCard } from './ui/tareasView.js';
-import { showConfirmModal, showCustomModal } from './ui/components/modal.js';
-import { prepararExportacion } from './api/index.js';
+import { procesarBusqueda, ordenarTareas, filtrarTareasPorEstado, procesarActualizacion, procesarDashboardProfesor } from './services/tareasService.js';
+import { createUserCard, createErrorCard, createProfessorDashboard } from './ui/tareasView.js';
+import { prepararExportacion, crearTareaMultiple, eliminarTarea, actualizarTarea } from './api/index.js';
 import { descargarJSON } from './ui/exportUI.js';
 
 // ============================================================
-// 2) ELEMENTOS DEL DOM Y ESTADO GLOBAL
+// ELEMENTOS DEL DOM
 // ============================================================
-const searchForm = document.getElementById('searchForm');
-const documentoInput = document.getElementById('documento');
-const documentoError = document.getElementById('documentoError');
+const viewRoles = document.getElementById('view-roles');
+const viewLogin = document.getElementById('view-login');
+const viewDashboard = document.getElementById('view-dashboard');
+
+const btnRolEstudiante = document.getElementById('btnRolEstudiante');
+const btnRolProfesor = document.getElementById('btnRolProfesor');
+const btnVolverRoles = document.getElementById('btnVolverRoles');
+const btnCerrarSesion = document.getElementById('btnCerrarSesion');
+
+const loginTitle = document.getElementById('loginTitle');
+const loginForm = document.getElementById('loginForm');
+const documentoInput = document.getElementById('documentoInput');
+const loginError = document.getElementById('loginError');
 const resultadoUsuario = document.getElementById('resultadoUsuario');
+const dashboardTitle = document.getElementById('dashboardTitle');
 
-// Estado actual de filtro y orden en la vista.
-let criterioGlobal = 'fecha';
+// ESTADOS GLOBALES
+let rolSeleccionado = ''; 
 let estadoFiltroGlobal = 'todos';
+let criterioGlobal = 'fecha_desc';
 
 // ============================================================
-// 3) FUNCION PRINCIPAL DE RENDERIZADO
+// NAVEGACIÓN Y LOGIN
 // ============================================================
-/**
- * Actualiza toda la zona de resultados para un usuario.
- * Aplica filtro + orden y reconstruye la tarjeta en pantalla.
- */
-function actualizarPantalla(usuario, todasLasTareas) {
+function mostrarVista(vistaId) {
+    viewRoles.classList.add('hidden');
+    viewLogin.classList.add('hidden');
+    viewDashboard.classList.add('hidden');
+    document.getElementById(vistaId).classList.remove('hidden');
+}
+
+btnRolEstudiante.addEventListener('click', () => { rolSeleccionado = 'estudiante'; loginTitle.textContent = 'Ingreso de Estudiantes'; mostrarVista('view-login'); });
+btnRolProfesor.addEventListener('click', () => { rolSeleccionado = 'profesor'; loginTitle.textContent = 'Ingreso de Profesores'; mostrarVista('view-login'); });
+btnVolverRoles.addEventListener('click', () => { mostrarVista('view-roles'); documentoInput.value = ''; clearError(loginError); });
+btnCerrarSesion.addEventListener('click', () => { mostrarVista('view-roles'); documentoInput.value = ''; resultadoUsuario.innerHTML = ''; });
+
+loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const documento = documentoInput.value.trim();
+
+    if (!isValidInput(documento)) return showError(loginError, 'El documento es obligatorio');
+
+    try {
+        const { usuario, tareas } = await procesarBusqueda(documento);
+        const idUsuario = Number(usuario.id);
+
+        if (rolSeleccionado === 'estudiante' && (idUsuario < 1 || idUsuario > 9)) throw new Error("Documento no válido para Estudiante.");
+        if (rolSeleccionado === 'profesor' && (idUsuario !== 10 && idUsuario !== 11)) throw new Error("No tienes permisos de Profesor.");
+
+        dashboardTitle.textContent = rolSeleccionado === 'profesor' ? 'Panel Administrativo' : 'Mis Tareas';
+        mostrarVista('view-dashboard');
+        
+        if (rolSeleccionado === 'estudiante') renderizarVistaEstudiante(usuario, tareas);
+        else renderizarVistaProfesor(usuario);
+
+        showSuccessToast(`Bienvenido, ${usuario.name}`);
+    } catch (error) { Swal.fire('Acceso Denegado', error.message, 'error'); }
+});
+
+documentoInput.addEventListener('input', () => clearError(loginError));
+
+// ============================================================
+// RENDERIZADO: ESTUDIANTE
+// ============================================================
+function renderizarVistaEstudiante(usuario, tareas) {
     resultadoUsuario.innerHTML = '';
-
-    // Primero se filtra y luego se ordena lo que se va a mostrar.
-    const tareasFiltradas = filtrarTareasPorEstado(todasLasTareas, estadoFiltroGlobal);
-    const tareasAMostrar = ordenarTareas(tareasFiltradas, criterioGlobal);
+    let tareasAMostrar = filtrarTareasPorEstado(tareas, estadoFiltroGlobal);
+    tareasAMostrar = ordenarTareas(tareasAMostrar, criterioGlobal);
 
     const card = createUserCard(
-        usuario,
-        todasLasTareas,
-        tareasAMostrar,
-        estadoFiltroGlobal,
-        criterioGlobal,
-
-        // 1) Crear tarea
-        (usuarioActual) => {
-            resultadoUsuario.innerHTML = '';
-
-            const form = renderTaskForm(
-                usuarioActual,
-                async (datos) => {
-                    try {
-                        const nuevasTareas = await procesarNuevaTarea(
-                            usuarioActual.id,
-                            datos.title,
-                            datos.body
-                        );
-                        actualizarPantalla(usuarioActual, nuevasTareas);
-                        showSuccessToast('Tarea creada correctamente');
-                    } catch (error) {
-                        showErrorToast('Error al crear la tarea');
-                    }
-                },
-                () => {
-                    actualizarPantalla(usuario, todasLasTareas);
-                }
-            );
-
-            resultadoUsuario.appendChild(form);
-        },
-
-        // 2) Editar tarea
-        async (tarea) => {
-            const formEdit = document.createElement('div');
-            formEdit.innerHTML = `
-                <div class="form__group">
-                    <label class="form__label">Titulo</label>
-                    <input type="text" id="editTitle" class="form__input" value="${tarea.title}">
-                </div>
-                <div class="form__group" style="margin-top: 15px;">
-                    <label class="form__label">Descripcion</label>
-                    <textarea id="editBody" class="form__input form__textarea">${tarea.body || ''}</textarea>
-                </div>
-            `;
-
-            const confirmado = await showCustomModal('Editar Tarea', formEdit, true);
-
-            if (confirmado) {
-                const nuevoTitulo = formEdit.querySelector('#editTitle').value.trim();
-                const nuevoBody = formEdit.querySelector('#editBody').value.trim();
-
-                if (!nuevoTitulo) return showErrorToast('El titulo no puede estar vacio');
-
-                try {
-                    const tareasActualizadas = await procesarActualizacion(tarea.id, usuario.id, {
-                        title: nuevoTitulo,
-                        body: nuevoBody
-                    });
-                    actualizarPantalla(usuario, tareasActualizadas);
-                    showSuccessToast('Tarea actualizada correctamente');
-                } catch (error) {
-                    showErrorToast('Error al editar la tarea');
-                }
-            }
-        },
-
-        // 3) Cambiar estado de tarea
-        async (tarea) => {
-            let nuevoEstado;
-            if (tarea.status === 'pendiente') nuevoEstado = 'en proceso';
-            else if (tarea.status === 'en proceso') nuevoEstado = 'completada';
-            else nuevoEstado = 'pendiente';
-
+        usuario, tareas, tareasAMostrar, estadoFiltroGlobal, criterioGlobal,
+        null, null, 
+        async (tareaId, nuevoEstado) => {
             try {
-                const tareasActualizadas = await procesarActualizacion(tarea.id, usuario.id, {
-                    status: nuevoEstado
-                });
-                actualizarPantalla(usuario, tareasActualizadas);
-                showInfoToast(`Tarea en estado: ${nuevoEstado}`);
-            } catch (error) {
-                showErrorToast('Error al cambiar el estado');
-            }
+                const tareasActualizadas = await procesarActualizacion(tareaId, usuario.id, { status: nuevoEstado });
+                renderizarVistaEstudiante(usuario, tareasActualizadas);
+                showSuccessToast('Estado actualizado correctamente');
+            } catch (error) { showErrorToast('Error al actualizar'); }
         },
-
-        // 4) Eliminar tarea
-        async (tarea) => {
-            const confirmado = await showConfirmModal(
-                'Eliminar Tarea',
-                `¿Seguro que deseas borrar "${tarea.title}"?`
-            );
-
-            if (confirmado) {
-                try {
-                    const nuevasTareas = await procesarEliminacion(tarea.id, usuario.id);
-                    actualizarPantalla(usuario, nuevasTareas);
-                    showSuccessToast('Tarea eliminada correctamente');
-                } catch (error) {
-                    showErrorToast('Error al eliminar la tarea');
-                }
-            }
-        },
-
-        // 5) Filtrar por estado
-        (nuevoFiltro) => {
-            estadoFiltroGlobal = nuevoFiltro;
-            actualizarPantalla(usuario, todasLasTareas);
-        },
-
-        // 6) Ordenar tareas
-        (nuevoCriterio) => {
-            criterioGlobal = nuevoCriterio;
-            actualizarPantalla(usuario, todasLasTareas);
-        },
-
-        // 7) Exportar tareas visibles
-        (tareasVisibles) => {
-            const contenido = prepararExportacion(tareasVisibles, usuario);
-            const nombreArchivo = `tareas-${usuario.document}-${Date.now()}.json`;
-            descargarJSON(contenido, nombreArchivo);
+        null, 
+        (nuevoEstado) => { estadoFiltroGlobal = nuevoEstado; renderizarVistaEstudiante(usuario, tareas); },
+        (nuevoCriterio) => { criterioGlobal = nuevoCriterio; renderizarVistaEstudiante(usuario, tareas); },
+        () => {
+            const contenido = prepararExportacion(tareasAMostrar, usuario);
+            descargarJSON(contenido, `mis-tareas-${usuario.document}.json`);
         }
     );
-
     resultadoUsuario.appendChild(card);
 }
 
 // ============================================================
-// 4) EVENTO DE BUSQUEDA DE USUARIO
+// RENDERIZADO: PROFESOR
 // ============================================================
-searchForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const documento = documentoInput.value.trim();
-
-    // Validacion basica del campo de documento.
-    if (!isValidInput(documento)) {
-        showError(documentoError, 'El documento es obligatorio');
-        documentoInput.classList.add('error');
-        return;
-    }
-
-    // Reinicia controles visuales cuando se busca otro usuario.
-    estadoFiltroGlobal = 'todos';
-    criterioGlobal = 'fecha';
-
+async function renderizarVistaProfesor(usuario) {
+    resultadoUsuario.innerHTML = '<div class="loading-spinner">Cargando sistema...</div>';
     try {
-        const { usuario, tareas } = await procesarBusqueda(documento);
-        actualizarPantalla(usuario, tareas);
-        showSuccessToast(`Hola, ${usuario.name}`);
-    } catch (error) {
+        const { estudiantes, tareasGlobales } = await procesarDashboardProfesor();
         resultadoUsuario.innerHTML = '';
-        resultadoUsuario.appendChild(createErrorCard(error.message));
-        showErrorToast('Error en la busqueda');
-    }
-});
+        
+        const card = createProfessorDashboard(
+            usuario, estudiantes, tareasGlobales,
+            
+            // 1. MODAL DE ASIGNACIÓN (CON SELECCIONAR TODOS)
+            async () => {
+                const estudiantesHtml = estudiantes.map(est => `
+                    <label class="modal-checkbox-item">
+                        <input type="checkbox" name="swal-est-select" value="${est.id}" class="swal2-checkbox">
+                        <span class="label-text">${est.name}</span>
+                    </label>
+                `).join('');
 
-// Limpia el mensaje de error mientras el usuario escribe.
-documentoInput.addEventListener('input', () => {
-    clearError(documentoError);
-    documentoInput.classList.remove('error');
-});
+                const { value: formValues } = await Swal.fire({
+                    title: '📝 Asignar Nueva Tarea',
+                    width: '600px',
+                    html: `
+                        <div class="swal-form-container">
+                            <input id="swal-title" class="swal2-input" placeholder="Título de la tarea" style="margin-bottom:15px; width:90%;">
+                            <textarea id="swal-body" class="swal2-textarea" placeholder="Descripción detallada" rows="3" style="margin-bottom:20px; width:90%;"></textarea>
+                            
+                            <div class="swal-students-selection">
+                                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #ddd; padding-bottom:10px; margin-bottom:15px;">
+                                    <h4 style="margin:0; font-size:1.1rem; color:var(--primary);">¿A quién se la asignamos?</h4>
+                                    <button type="button" id="swal-btn-select-all" class="btn btn--secondary btn--sm">✅ Seleccionar a Todos</button>
+                                </div>
+                                <div class="students-grid-list">
+                                    ${estudiantesHtml}
+                                </div>
+                            </div>
+                        </div>
+                    `,
+                    focusConfirm: false,
+                    showCancelButton: true,
+                    confirmButtonText: 'Crear y Asignar',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#7c3aed',
+                    didOpen: () => {
+                        const btnSelectAll = Swal.getPopup().querySelector('#swal-btn-select-all');
+                        const checkboxes = Swal.getPopup().querySelectorAll('input[name="swal-est-select"]');
+                        let allSelected = false;
+                        
+                        btnSelectAll.addEventListener('click', () => {
+                            allSelected = !allSelected;
+                            checkboxes.forEach(cb => cb.checked = allSelected);
+                            btnSelectAll.textContent = allSelected ? '❌ Desmarcar Todos' : '✅ Seleccionar a Todos';
+                            btnSelectAll.classList.toggle('btn--danger', allSelected);
+                            btnSelectAll.classList.toggle('btn--secondary', !allSelected);
+                        });
+                    },
+                    preConfirm: () => {
+                        const title = document.getElementById('swal-title').value.trim();
+                        const body = document.getElementById('swal-body').value.trim();
+                        const userIds = Array.from(document.querySelectorAll('input[name="swal-est-select"]:checked')).map(cb => cb.value);
+                        
+                        if (!title) Swal.showValidationMessage('El título es obligatorio');
+                        else if (userIds.length === 0) Swal.showValidationMessage('Selecciona al menos un estudiante');
+                        
+                        return { title, body, userIds };
+                    }
+                });
+
+                if (formValues) {
+                    Swal.showLoading();
+                    await crearTareaMultiple(formValues.title, formValues.body, formValues.userIds);
+                    Swal.fire('¡Asignada!', 'La tarea ha sido distribuida exitosamente.', 'success');
+                    renderizarVistaProfesor(usuario);
+                }
+            },
+
+            // 2. EDITAR TAREA
+            async (tarea) => {
+                const { value: formValues } = await Swal.fire({
+                    title: 'Editar Tarea',
+                    html: `<input id="swal-edit-title" class="swal2-input" value="${tarea.title}" style="width:90%;">
+                           <textarea id="swal-edit-body" class="swal2-textarea" style="width:90%;">${tarea.body || ''}</textarea>`,
+                    focusConfirm: false, showCancelButton: true, confirmButtonColor: '#7c3aed',
+                    preConfirm: () => ({ title: document.getElementById('swal-edit-title').value, body: document.getElementById('swal-edit-body').value })
+                });
+                if (formValues) {
+                    await actualizarTarea(tarea.id, formValues);
+                    showSuccessToast('Tarea editada correctamente');
+                    renderizarVistaProfesor(usuario);
+                }
+            },
+
+            // 3. CAMBIAR ESTADO
+            async (tareaId, nuevoEstado) => { 
+                await actualizarTarea(tareaId, { status: nuevoEstado }); 
+                renderizarVistaProfesor(usuario); 
+            },
+
+            // 4. ELIMINAR TAREA
+            async (tareaId) => {
+                const result = await Swal.fire({ title: '¿Estás seguro?', text: "Esta acción es irreversible", icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Sí, eliminar' });
+                if (result.isConfirmed) { 
+                    await eliminarTarea(tareaId); 
+                    Swal.fire('Eliminada', '', 'success'); 
+                    renderizarVistaProfesor(usuario); 
+                }
+            },
+
+            // 5. EXPORTAR
+            (tareasExportar, nombreArchivo) => { 
+                const contenido = JSON.stringify(tareasExportar, null, 2); 
+                descargarJSON(contenido, nombreArchivo); 
+                Swal.fire('Exportado', 'Archivo descargado exitosamente.', 'success'); 
+            }
+        );
+        resultadoUsuario.appendChild(card);
+    } catch (error) { 
+        resultadoUsuario.innerHTML = '<div class="error-state">Error cargando el dashboard.</div>'; 
+    }
+}

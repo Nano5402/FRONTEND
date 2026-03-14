@@ -1,327 +1,237 @@
 ﻿// src/ui/tareasView.js
-// Componentes visuales para mostrar usuario, tareas y formularios.
+import { ordenarTareas, filtrarTareasPorEstado } from '../services/tareasService.js';
 
-/**
- * Construye la tarjeta principal del usuario con sus tareas y controles.
- * Recibe callbacks para crear, editar, cambiar estado, eliminar, filtrar, ordenar y exportar.
- */
-export function createUserCard(
-    usuario,
-    todasLasTareas,
-    tareasAMostrar,
-    estadoFiltro,
-    criterioOrden,
-    onCrearTarea,
-    onEditar,
-    onToggle,
-    onEliminar,
-    onFiltrar,
-    onOrdenar,
-    onExportar
-) {
+function getStatusBadge(status) {
+    let badgeClass = 'badge--pendiente';
+    let icon = '⏳';
+    if (status === 'en progreso') { badgeClass = 'badge--progreso'; icon = '🚀'; }
+    if (status === 'completada') { badgeClass = 'badge--completada'; icon = '✅'; }
+    return `<span class="badge ${badgeClass}">${icon} ${status}</span>`;
+}
+
+// ==========================================
+// VISTA ESTUDIANTE (Rediseñada y con vida)
+// ==========================================
+export function createUserCard(usuario, tareas, tareasAMostrar, estadoFiltro, criterioOrden, onCrearTarea, onEditar, onToggle, onEliminar, onFiltrar, onOrdenar, onExportar) {
     const card = document.createElement('div');
-    card.classList.add('user-card');
-
-    // Encabezado con datos básicos del usuario.
-    const header = document.createElement('div');
-    header.style.marginBottom = 'var(--spacing-lg)';
-
-    const nombre = document.createElement('h3');
-    nombre.textContent = usuario.name;
-
-    const documento = document.createElement('p');
-    documento.innerHTML = `<strong>Documento:</strong> ${usuario.document}`;
-
-    const correo = document.createElement('p');
-    correo.innerHTML = `<strong>Correo:</strong> ${usuario.email}`;
-
-    header.appendChild(nombre);
-    header.appendChild(documento);
-    header.appendChild(correo);
-
-    // Estadísticas calculadas con todas las tareas, no solo las visibles.
-    const total = todasLasTareas.length;
-    const pendientes = todasLasTareas.filter((t) => t.status === 'pendiente').length;
-    const enProceso = todasLasTareas.filter((t) => t.status === 'en proceso').length;
-    const completadas = todasLasTareas.filter((t) => t.status === 'completada').length;
-
-    const stats = document.createElement('div');
-    stats.classList.add('stats-bar');
-    stats.innerHTML = `
-        <div class="stat-item">
-            <span class="stat-label">Total</span>
-            <span class="stat-value">${total}</span>
+    card.classList.add('student-dashboard-wrapper');
+    
+    card.innerHTML = `
+        <div class="welcome-banner">
+            <div class="banner-content">
+                <h2 class="welcome-title">¡Hola, ${usuario.name}! 👋</h2>
+                <p class="welcome-subtitle">Aquí está el resumen de tus actividades asignadas.</p>
+            </div>
+            ${onExportar ? `<button id="btnExport" class="btn btn--outline btn--banner">⬇ Descargar mis tareas</button>` : ''}
         </div>
-        <div class="stat-item">
-            <span class="stat-label">Pendientes</span>
-            <span class="stat-value" style="color: var(--color-warning)">${pendientes}</span>
+        
+        <div class="controls-bar card">
+            <div class="control-group">
+                <label>Filtrar por estado:</label>
+                <select id="filtroEstado" class="form__input form__select">
+                    <option value="todos" ${estadoFiltro === 'todos' ? 'selected' : ''}>Todas las tareas</option>
+                    <option value="pendiente" ${estadoFiltro === 'pendiente' ? 'selected' : ''}>⏳ Pendientes</option>
+                    <option value="en progreso" ${estadoFiltro === 'en progreso' ? 'selected' : ''}>🚀 En Progreso</option>
+                    <option value="completada" ${estadoFiltro === 'completada' ? 'selected' : ''}>✅ Completadas</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Ordenar por:</label>
+                <select id="ordenCriterio" class="form__input form__select">
+                    <option value="fecha_desc" ${criterioOrden === 'fecha_desc' ? 'selected' : ''}>Nuevas primero</option>
+                    <option value="fecha_asc" ${criterioOrden === 'fecha_asc' ? 'selected' : ''}>Antiguas primero</option>
+                    <option value="az" ${criterioOrden === 'az' ? 'selected' : ''}>Alfabético (A-Z)</option>
+                    <option value="za" ${criterioOrden === 'za' ? 'selected' : ''}>Alfabético (Z-A)</option>
+                </select>
+            </div>
         </div>
-        <div class="stat-item">
-            <span class="stat-label">En Proceso</span>
-            <span class="stat-value" style="color: var(--color-primary)">${enProceso}</span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-label">Completadas</span>
-            <span class="stat-value" style="color: var(--color-success)">${completadas}</span>
-        </div>
+        
+        <div id="listaTareasEstudiante" class="tasks-grid"></div>
     `;
 
-    // Botón para abrir el formulario de creación de tarea.
-    const btnCrearTarea = document.createElement('button');
-    btnCrearTarea.classList.add('btn', 'btn--secondary');
-    btnCrearTarea.textContent = 'Crear tarea';
-    btnCrearTarea.addEventListener('click', () => onCrearTarea(usuario));
+    if (onExportar) card.querySelector('#btnExport').onclick = onExportar;
+    if (onFiltrar) card.querySelector('#filtroEstado').onchange = (e) => onFiltrar(e.target.value);
+    if (onOrdenar) card.querySelector('#ordenCriterio').onchange = (e) => onOrdenar(e.target.value);
 
-    // Botón para exportar solo las tareas visibles en pantalla.
-    const btnExportar = document.createElement('button');
-    btnExportar.type = 'button';
-    btnExportar.classList.add('btn', 'btn--export');
-    btnExportar.textContent = '⬇ Exportar JSON';
-    btnExportar.addEventListener('click', () => {
-        if (onExportar) onExportar(tareasAMostrar);
-    });
-
-    card.appendChild(header);
-    card.appendChild(stats);
-    card.appendChild(btnCrearTarea);
-    card.appendChild(btnExportar);
-
-    // Contenedor de la lista y controles de tareas.
-    const tareasContainer = document.createElement('div');
-    tareasContainer.classList.add('tasks-container');
-
-    const listHeader = document.createElement('div');
-    listHeader.style.display = 'flex';
-    listHeader.style.flexDirection = 'column';
-    listHeader.style.gap = '10px';
-    listHeader.style.marginBottom = 'var(--spacing-lg)';
-
-    const titleTareas = document.createElement('h4');
-    titleTareas.textContent = 'Listado de tareas';
-    titleTareas.style.margin = '0';
-
-    // Controles de filtro y orden.
-    const controlesDiv = document.createElement('div');
-    controlesDiv.style.display = 'flex';
-    controlesDiv.style.gap = '10px';
-    controlesDiv.style.flexWrap = 'wrap';
-
-    const selectFiltro = document.createElement('select');
-    selectFiltro.classList.add('form__input');
-    selectFiltro.style.width = 'auto';
-    selectFiltro.style.padding = 'var(--spacing-xs) var(--spacing-sm)';
-    selectFiltro.innerHTML = `
-        <option value="todos">Todos los estados</option>
-        <option value="pendiente">Pendientes</option>
-        <option value="en proceso">En proceso</option>
-        <option value="completada">Completadas</option>
-    `;
-    selectFiltro.value = estadoFiltro || 'todos';
-    selectFiltro.addEventListener('change', (e) => onFiltrar(e.target.value));
-
-    const selectOrden = document.createElement('select');
-    selectOrden.classList.add('form__input');
-    selectOrden.style.width = 'auto';
-    selectOrden.style.padding = 'var(--spacing-xs) var(--spacing-sm)';
-    selectOrden.innerHTML = `
-        <option value="fecha">Por Fecha de creación</option>
-        <option value="nombre">Por Nombre (A-Z)</option>
-        <option value="estado">Por Estado</option>
-    `;
-    selectOrden.value = criterioOrden || 'fecha';
-    selectOrden.addEventListener('change', (e) => onOrdenar(e.target.value));
-
-    controlesDiv.appendChild(selectFiltro);
-    controlesDiv.appendChild(selectOrden);
-
-    listHeader.appendChild(titleTareas);
-    listHeader.appendChild(controlesDiv);
-    tareasContainer.appendChild(listHeader);
-
-    // Si no hay tareas para mostrar, se informa con un mensaje simple.
+    const lista = card.querySelector('#listaTareasEstudiante');
+    
     if (tareasAMostrar.length === 0) {
-        const noTareas = document.createElement('p');
-        noTareas.textContent = 'No hay tareas que coincidan con los filtros.';
-        noTareas.style.color = 'var(--color-text-tertiary)';
-        noTareas.style.fontStyle = 'italic';
-        tareasContainer.appendChild(noTareas);
+        lista.innerHTML = '<div class="empty-state"><h3>Sin tareas</h3><p>No tienes tareas bajo estos filtros.</p></div>';
     } else {
-        tareasAMostrar.forEach((tarea) => {
-            const taskItem = createTaskItem(tarea, onEditar, onToggle, onEliminar);
-            tareasContainer.appendChild(taskItem);
+        tareasAMostrar.forEach(tarea => {
+            const tDiv = document.createElement('div');
+            tDiv.className = `task-item card border-${tarea.status.replace(/\s+/g, '-')}`;
+            tDiv.innerHTML = `
+                <div class="task-item__header">
+                    <h4 class="task-title">${tarea.title}</h4>
+                    ${getStatusBadge(tarea.status)}
+                </div>
+                <p class="task-body">${tarea.body || 'Sin descripción disponible.'}</p>
+                <div class="actions-container"></div>
+            `;
+
+            const actions = tDiv.querySelector('.actions-container');
+            if (onToggle) {
+                if (tarea.status === 'pendiente') {
+                    const btn = document.createElement('button');
+                    btn.className = `btn btn--primary btn--full`;
+                    btn.innerHTML = '🚀 Iniciar Tarea (Pasar a En Progreso)';
+                    btn.onclick = () => onToggle(tarea.id, 'en progreso');
+                    actions.appendChild(btn);
+                } else if (tarea.status === 'en progreso') {
+                    actions.innerHTML = '<div class="status-notice info">Estás trabajando en esta tarea 🏃‍♂️</div>';
+                } else if (tarea.status === 'completada') {
+                    actions.innerHTML = '<div class="status-notice success">Tarea finalizada 🎉</div>';
+                }
+            }
+            lista.appendChild(tDiv);
         });
     }
-
-    card.appendChild(tareasContainer);
     return card;
 }
 
-/**
- * Crea un elemento visual para una tarea con sus acciones.
- */
-export function createTaskItem(tarea, onEditar, onToggle, onEliminar) {
-    const taskItem = document.createElement('div');
-    taskItem.classList.add('task-item');
+// ==========================================
+// VISTA PROFESOR (Con Filtros y Orden)
+// ==========================================
+export function createProfessorDashboard(profesor, estudiantes, tareasGlobales, onAbrirModalCrear, onEditar, onToggle, onEliminar, onExportar) {
+    const container = document.createElement('div');
+    container.className = 'dashboard-container';
+    
+    container.innerHTML = `
+        <div class="dashboard-header-actions">
+            <div>
+                <h2 class="dashboard-title">¡Bienvenido, Profesor ${profesor.name}!</h2>
+                <p style="color:var(--text-muted)">Selecciona un estudiante para gestionar sus tareas.</p>
+            </div>
+            <div class="header-buttons">
+                <button id="btnCrearNueva" class="btn btn--primary btn--large shadow-glow">➕ Asignar Nueva Tarea</button>
+                <button id="btnExportarTodo" class="btn btn--outline">⬇ Exportar Sistema</button>
+            </div>
+        </div>
 
-    if (tarea.status === 'completada') {
-        taskItem.classList.add('completed');
-    }
+        <div class="dashboard-grid">
+            <aside class="card sidebar-card">
+                <h3 class="section-title">👥 Tus Estudiantes</h3>
+                <div class="students-list-wrapper">
+                    ${estudiantes.map(est => `
+                        <div class="student-item" data-id="${est.id}" data-nombre="${est.name}">
+                            <div class="student-info">
+                                <span class="student-avatar">${est.name.charAt(0)}</span>
+                                <span class="student-name">${est.name}</span>
+                            </div>
+                            <span class="chevron">→</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </aside>
 
-    const taskInfo = document.createElement('div');
-    taskInfo.classList.add('task-info');
+            <main class="card main-panel-card">
+                <div class="main-panel-header">
+                    <h3 id="tituloTareasEstudiante" class="section-title mb-0">Selecciona un estudiante</h3>
+                    <button id="btnExportarEstudiante" class="btn btn--outline btn--sm hidden">⬇ Exportar Alumno</button>
+                </div>
+                
+                <div id="profesorControls" class="controls-bar hidden" style="margin-bottom: 20px;">
+                    <select id="profFiltroEstado" class="form__input form__select"><option value="todos">Todos los estados</option><option value="pendiente">Pendientes</option><option value="en progreso">En Progreso</option><option value="completada">Completadas</option></select>
+                    <select id="profOrdenCriterio" class="form__input form__select"><option value="fecha_desc">Nuevas primero</option><option value="fecha_asc">Antiguas primero</option><option value="az">A-Z</option><option value="za">Z-A</option></select>
+                </div>
 
-    const titulo = document.createElement('h5');
-    titulo.textContent = tarea.title;
+                <div id="contenedorTareasEstudiante" class="tasks-list-container">
+                    <div class="empty-state illustration-state">
+                        <span style="font-size: 3rem;">📂</span>
+                        <p>Haz clic en un estudiante de la lista izquierda.</p>
+                    </div>
+                </div>
+            </main>
+        </div>
+    `;
 
-    const descripcion = document.createElement('p');
-    const estadoTexto = tarea.status.toUpperCase();
-    const bodyTexto = tarea.body ? ` | ${tarea.body}` : '';
-    descripcion.textContent = `${estadoTexto}${bodyTexto}`;
+    container.querySelector('#btnCrearNueva').addEventListener('click', onAbrirModalCrear);
+    container.querySelector('#btnExportarTodo').addEventListener('click', () => onExportar(tareasGlobales, 'sistema-completo.json'));
 
-    taskInfo.appendChild(titulo);
-    taskInfo.appendChild(descripcion);
+    const itemsEstudiantes = container.querySelectorAll('.student-item');
+    const contenedorTareas = container.querySelector('#contenedorTareasEstudiante');
+    const tituloTareas = container.querySelector('#tituloTareasEstudiante');
+    const btnExportarEst = container.querySelector('#btnExportarEstudiante');
+    const profControls = container.querySelector('#profesorControls');
+    
+    const selectFiltro = container.querySelector('#profFiltroEstado');
+    const selectOrden = container.querySelector('#profOrdenCriterio');
 
-    const actionsContainer = document.createElement('div');
-    actionsContainer.classList.add('task-actions');
+    let currentEstId = null;
+    let currentEstNombre = null;
 
-    if (onEditar) {
-        const btnEditar = document.createElement('button');
-        btnEditar.classList.add('btn', 'btn--sm', 'btn--primary');
-        btnEditar.textContent = 'Editar';
-        btnEditar.addEventListener('click', () => onEditar(tarea));
-        actionsContainer.appendChild(btnEditar);
-    }
+    // Función interna para renderizar con filtros
+    function renderizarTareas() {
+        if (!currentEstId) return;
+        
+        let tareasEstudiante = tareasGlobales.filter(t => t.userIds && t.userIds.includes(String(currentEstId)));
+        tareasEstudiante = filtrarTareasPorEstado(tareasEstudiante, selectFiltro.value);
+        tareasEstudiante = ordenarTareas(tareasEstudiante, selectOrden.value);
 
-    if (onToggle) {
-        const btnToggle = document.createElement('button');
-        let textoBoton = 'Avanzar';
-        let claseBoton = 'btn--info';
+        btnExportarEst.onclick = () => onExportar(tareasEstudiante, `tareas-${currentEstNombre.replace(/\s+/g, '-').toLowerCase()}.json`);
 
-        if (tarea.status === 'pendiente') {
-            textoBoton = 'En proceso';
-            claseBoton = 'btn--warning';
-        } else if (tarea.status === 'en proceso') {
-            textoBoton = 'Completar';
-            claseBoton = 'btn--success';
-        } else {
-            textoBoton = 'Reabrir';
-            claseBoton = 'btn--secondary';
-        }
-
-        btnToggle.classList.add('btn', 'btn--sm', claseBoton);
-        btnToggle.textContent = textoBoton;
-        btnToggle.addEventListener('click', () => onToggle(tarea));
-        actionsContainer.appendChild(btnToggle);
-    }
-
-    if (onEliminar) {
-        const btnEliminar = document.createElement('button');
-        btnEliminar.classList.add('btn', 'btn--sm', 'btn--danger');
-        btnEliminar.textContent = 'Borrar';
-        btnEliminar.addEventListener('click', () => onEliminar(tarea));
-        actionsContainer.appendChild(btnEliminar);
-    }
-
-    taskItem.appendChild(taskInfo);
-    taskItem.appendChild(actionsContainer);
-
-    return taskItem;
-}
-
-/**
- * Renderiza el formulario para crear una nueva tarea.
- */
-export function renderTaskForm(usuario, onSubmit, onCancel) {
-    const form = document.createElement('form');
-    form.classList.add('form', 'form-tarea');
-    form.style.marginTop = 'var(--spacing-xl)';
-
-    const grupoTitulo = document.createElement('div');
-    grupoTitulo.classList.add('form__group');
-
-    const labelTitulo = document.createElement('label');
-    labelTitulo.htmlFor = 'taskTitle';
-    labelTitulo.classList.add('form__label');
-    labelTitulo.textContent = 'Título de la tarea';
-
-    const inputTitulo = document.createElement('input');
-    inputTitulo.type = 'text';
-    inputTitulo.id = 'taskTitle';
-    inputTitulo.classList.add('form__input');
-    inputTitulo.placeholder = 'Ingresa el título';
-    inputTitulo.required = true;
-
-    grupoTitulo.appendChild(labelTitulo);
-    grupoTitulo.appendChild(inputTitulo);
-
-    const grupoDescripcion = document.createElement('div');
-    grupoDescripcion.classList.add('form__group');
-
-    const labelDescripcion = document.createElement('label');
-    labelDescripcion.htmlFor = 'taskBody';
-    labelDescripcion.classList.add('form__label');
-    labelDescripcion.textContent = 'Descripción';
-
-    const textareaDescripcion = document.createElement('textarea');
-    textareaDescripcion.id = 'taskBody';
-    textareaDescripcion.classList.add('form__input', 'form__textarea');
-    textareaDescripcion.placeholder = 'Ingresa la descripción';
-
-    grupoDescripcion.appendChild(labelDescripcion);
-    grupoDescripcion.appendChild(textareaDescripcion);
-
-    const botones = document.createElement('div');
-    botones.classList.add('form__actions');
-
-    const btnCancelar = document.createElement('button');
-    btnCancelar.type = 'button';
-    btnCancelar.classList.add('btn', 'btn--secondary');
-    btnCancelar.textContent = 'Cancelar';
-
-    const btnGuardar = document.createElement('button');
-    btnGuardar.type = 'submit';
-    btnGuardar.classList.add('btn', 'btn--primary');
-    btnGuardar.textContent = 'Guardar';
-
-    botones.appendChild(btnCancelar);
-    botones.appendChild(btnGuardar);
-
-    form.appendChild(grupoTitulo);
-    form.appendChild(grupoDescripcion);
-    form.appendChild(botones);
-
-    // Validación básica: el título es obligatorio.
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const title = inputTitulo.value.trim();
-        const body = textareaDescripcion.value.trim();
-
-        if (!title) {
-            alert('El título es obligatorio');
+        if (tareasEstudiante.length === 0) {
+            contenedorTareas.innerHTML = `<div class="empty-state"><p>No se encontraron tareas con estos filtros.</p></div>`;
             return;
         }
 
-        onSubmit({ title, body, usuario });
+        contenedorTareas.innerHTML = '';
+        tareasEstudiante.forEach(tarea => {
+            const item = document.createElement('div');
+            item.className = `task-item card border-${tarea.status.replace(/\s+/g, '-')}`;
+            item.innerHTML = `
+                <div class="task-item__header">
+                    <h4 class="task-title">${tarea.title}</h4>
+                    ${getStatusBadge(tarea.status)}
+                </div>
+                <p class="task-body">${tarea.body || ''}</p>
+                <div class="actions-prof-footer">
+                    <div class="main-actions">
+                        <button class="btn btn--sm ${tarea.status === 'pendiente' ? 'btn--primary' : 'btn--secondary'} btn-toggle-status">
+                            ${tarea.status === 'pendiente' ? '▶ Iniciar' : (tarea.status === 'en progreso' ? '✅ Completar' : '🔄 Reabrir')}
+                        </button>
+                    </div>
+                    <div class="secondary-actions">
+                        <button class="btn btn--warning btn--sm btn-edit">✏️ Editar</button>
+                        <button class="btn btn--danger btn--sm btn-delete">🗑️ Eliminar</button>
+                    </div>
+                </div>
+            `;
+            
+            item.querySelector('.btn-toggle-status').onclick = () => onToggle(tarea.id, tarea.status === 'pendiente' ? 'en progreso' : (tarea.status === 'en progreso' ? 'completada' : 'pendiente'));
+            item.querySelector('.btn-edit').onclick = () => onEditar(tarea);
+            item.querySelector('.btn-delete').onclick = () => onEliminar(tarea.id);
+
+            contenedorTareas.appendChild(item);
+        });
+    }
+
+    // Disparadores de filtros del profesor
+    selectFiltro.addEventListener('change', renderizarTareas);
+    selectOrden.addEventListener('change', renderizarTareas);
+
+    itemsEstudiantes.forEach(item => {
+        item.addEventListener('click', (e) => {
+            itemsEstudiantes.forEach(i => i.classList.remove('active'));
+            const currentItem = e.currentTarget;
+            currentItem.classList.add('active');
+
+            currentEstId = currentItem.dataset.id;
+            currentEstNombre = currentItem.dataset.nombre;
+            
+            tituloTareas.textContent = `Gestión: ${currentEstNombre}`;
+            btnExportarEst.classList.remove('hidden');
+            profControls.classList.remove('hidden');
+            profControls.style.display = 'flex'; 
+            
+            renderizarTareas();
+        });
     });
 
-    btnCancelar.addEventListener('click', () => {
-        if (onCancel) onCancel();
-        else form.remove();
-    });
-
-    return form;
+    return container;
 }
 
-/**
- * Crea una tarjeta simple para mostrar errores en pantalla.
- */
 export function createErrorCard(mensaje) {
-    const errorCard = document.createElement('div');
-    errorCard.classList.add('error-card');
-
-    const parrafo = document.createElement('p');
-    parrafo.textContent = mensaje;
-
-    errorCard.appendChild(parrafo);
-    return errorCard;
+    return `<div class="card error-card"><h3>⚠️ ${mensaje}</h3></div>`;
 }
