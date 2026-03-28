@@ -1,4 +1,4 @@
-# Acuerdo de Trabajo del Equipo (Team Agreement)
+# Acuerdo de Trabajo del Equipo (Team Agreement)git commit -m "docs: firmar team agreement por andres"
 
 Este documento establece las reglas de convivencia, comunicación y estándares de calidad de nuestra célula ágil. Al participar en este repositorio, todos los miembros del equipo aceptamos y nos comprometemos a cumplir estos acuerdos.
 

@@ -66,7 +66,7 @@ export function createUserCard(usuario, tareas, tareasAMostrar, estadoFiltro, cr
                     <h4 class="task-title">${tarea.title}</h4>
                     ${getStatusBadge(tarea.status)}
                 </div>
-                <p class="task-body">${tarea.body || 'Sin descripción disponible.'}</p>
+               <p class="task-body">${tarea.description || 'Sin descripción detallada.'}</p>
                 <div class="actions-container"></div>
             `;
 
@@ -165,7 +165,8 @@ export function createProfessorDashboard(profesor, estudiantes, tareasGlobales, 
     function renderizarTareas() {
         if (!currentEstId) return;
         
-        let tareasEstudiante = tareasGlobales.filter(t => t.userIds && t.userIds.includes(String(currentEstId)));
+// 🔥 Filtramos usando exactamente la misma lógica que usa MySQL (userId)
+let tareasEstudiante = tareasGlobales.filter(t => String(t.userId) === String(currentEstId));
         tareasEstudiante = filtrarTareasPorEstado(tareasEstudiante, selectFiltro.value);
         tareasEstudiante = ordenarTareas(tareasEstudiante, selectOrden.value);
 
@@ -185,7 +186,7 @@ export function createProfessorDashboard(profesor, estudiantes, tareasGlobales, 
                     <h4 class="task-title">${tarea.title}</h4>
                     ${getStatusBadge(tarea.status)}
                 </div>
-                <p class="task-body">${tarea.body || ''}</p>
+                    <p class="task-body">${tarea.description || 'Sin descripción detallada.'}</p>
                 <div class="actions-prof-footer">
                     <div class="main-actions">
                         <button class="btn btn--sm ${tarea.status === 'pendiente' ? 'btn--primary' : 'btn--secondary'} btn-toggle-status">
