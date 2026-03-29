@@ -10,7 +10,7 @@
 
 <body>
   <div class="container">
-    <header class="header">
+    <header class="header" id="mainHeader">
       <h1 class="header__title">Gestión de Tareas SENA</h1>
       <p class="header__subtitle" id="headerSubtitle">Selecciona tu perfil de ingreso</p>
     </header>
@@ -51,6 +51,40 @@
       <div id="resultadoUsuario" class="results-container"></div>
     </section>
   </div>
+
+<section id="view-admin-users" class="view-section hidden">
+      <div class="admin-header">
+        <div class="admin-header-titles">
+          <h2 class="dashboard-title mb-0">Gestión de Usuarios</h2>
+          <p style="color: var(--text-muted); margin-top: 5px;">Administra accesos, credenciales y altas del sistema.</p>
+        </div>
+        <div class="admin-header-actions">
+          <button class="btn btn--primary shadow-glow" onclick="crearUsuarioUI()">
+            <span>➕</span> Nuevo Usuario
+          </button>
+          <button id="btnVolverProfesor" class="btn btn--outline">
+            <span>←</span> Volver al Dashboard
+          </button>
+        </div>
+      </div>
+      
+      <div class="admin-table-wrapper">
+        <table class="admin-table" id="tablaUsuariosAdmin">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Usuario</th>
+              <th>Contacto</th>
+              <th>Rol</th>
+              <th>Estado</th>
+              <th style="text-align: center;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyUsuariosAdmin">
+            </tbody>
+        </table>
+      </div>
+    </section>
 
   <script type="module" src="src/script.js"></script>
 </body>
