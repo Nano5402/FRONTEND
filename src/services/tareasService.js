@@ -1,13 +1,5 @@
-// src/services/tareasService.js
-import { fetchUsuarioPorDocumento, fetchTodosLosUsuarios } from '../api/usuariosApi.js';
+import { fetchTodosLosUsuarios } from '../api/usuariosApi.js';
 import { fetchTareasPorUsuario, eliminarTarea, actualizarTarea as actualizarTareaApi, fetchTodasLasTareas } from '../api/tareasApi.js';
-
-export async function procesarBusqueda(documento) {
-    const usuario = await fetchUsuarioPorDocumento(documento);
-    if (!usuario) throw new Error(`No se encontró el documento "${documento}".`);
-    const tareas = await fetchTareasPorUsuario(usuario.id);
-    return { usuario, tareas };
-}
 
 export async function procesarActualizacion(taskId, userId, datosNuevos) {
     await actualizarTareaApi(taskId, datosNuevos);
@@ -20,16 +12,15 @@ export async function procesarEliminacion(taskId, userId) {
     return await fetchTareasPorUsuario(userId);
 }
 
-// Sistema de ordenamiento avanzado
 export function ordenarTareas(tareas, criterio) {
     const tareasCopia = [...tareas];
     switch (criterio) {
         case 'az': return tareasCopia.sort((a, b) => a.title.localeCompare(b.title));
         case 'za': return tareasCopia.sort((a, b) => b.title.localeCompare(a.title));
         case 'estado': return tareasCopia.sort((a, b) => a.status.localeCompare(b.status));
-        case 'fecha_asc': return tareasCopia.sort((a, b) => a.id - b.id); // Más antiguas primero
+        case 'fecha_asc': return tareasCopia.sort((a, b) => a.id - b.id);
         case 'fecha_desc':
-        default: return tareasCopia.sort((a, b) => b.id - a.id); // Más recientes primero
+        default: return tareasCopia.sort((a, b) => b.id - a.id);
     }
 }
 
@@ -40,8 +31,18 @@ export function filtrarTareasPorEstado(tareas, estado) {
 
 export async function procesarDashboardProfesor() {
     const todosLosUsuarios = await fetchTodosLosUsuarios();
-    // Filtramos del ID 1 al 9 como estudiantes
-    const estudiantes = todosLosUsuarios.filter(u => Number(u.id) >= 1 && Number(u.id) <= 9);
-    const tareasGlobales = await fetchTodasLasTareas();
-    return { estudiantes, tareasGlobales };
+    const todasLasTareas = await fetchTodasLasTareas();
+    
+    // 🛡️ SEGURO ANTIFALLOS
+    if (!Array.isArray(todosLosUsuarios)) throw new Error("Los usuarios no cargaron correctamente");
+    if (!Array.isArray(todasLasTareas)) throw new Error("Las tareas no cargaron correctamente");
+
+    // 🚀 REGLA DE NEGOCIO (RF06): Solo enviamos estudiantes que estén activos
+    const estudiantesActivos = todosLosUsuarios.filter(u => u.role === 'user' && u.status === 'activo');
+
+    // 🔥 CORRECCIÓN: Devolvemos exactamente los nombres que script.js está esperando
+    return {
+        estudiantes: estudiantesActivos,
+        tareasGlobales: todasLasTareas
+    };
 }
