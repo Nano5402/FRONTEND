@@ -1,15 +1,13 @@
 ﻿import { API_URL } from '../config/constants.js';
 import { getAuthHeaders } from './usuariosApi.js';
 
-// 🛡️ ADAPTADOR: Disfraza la tarea de MySQL para la UI y fuerza los tipos de datos
+// 🛡️ ADAPTADOR: Disfraza la tarea de MySQL para la UI
 function adaptarTarea(tarea) {
-    // Forzamos matemáticamente a que los IDs sean números (Number) para que el filtro no falle
     const idNumerico = tarea.userId ? Number(tarea.userId) : null;
-    
     return {
         ...tarea,
-        userId: idNumerico, // Aseguramos el ID principal
-        userIds: idNumerico ? [idNumerico] : [] // Aseguramos el array para tu lógica de UI
+        userId: idNumerico, 
+        userIds: idNumerico ? [idNumerico] : [] 
     };
 }
 
@@ -17,29 +15,32 @@ export async function fetchTareasPorUsuario(userId) {
     const response = await fetch(`${API_URL}/users/${userId}/tasks`, { 
         method: "GET",
         headers: getAuthHeaders(),
-        cache: "no-store" // 🔥 OBLIGA A TRAER DATOS FRESCOS DE MYSQL
+        cache: "no-store" 
     });
     if (!response.ok) throw new Error("Error al obtener tareas del usuario");
-    const data = await response.json();
-    return Array.isArray(data) ? data.map(adaptarTarea) : [];
+    
+    const json = await response.json();
+    // Verificamos que success sea true y extraemos json.data
+    return json.success && Array.isArray(json.data) ? json.data.map(adaptarTarea) : [];
 }
 
 export async function fetchTodasLasTareas() {
     const response = await fetch(`${API_URL}/tasks`, { 
         method: "GET",
         headers: getAuthHeaders(),
-        cache: "no-store" // 🔥 OBLIGA A TRAER DATOS FRESCOS DE MYSQL
+        cache: "no-store" 
     });
     if (!response.ok) throw new Error("Error al obtener todas las tareas");
-    const data = await response.json();
-    return Array.isArray(data) ? data.map(adaptarTarea) : [];
+    
+    const json = await response.json();
+    return json.success && Array.isArray(json.data) ? json.data.map(adaptarTarea) : [];
 }
 
 export async function crearTareaMultiple(title, body, userIds) {
     const response = await fetch(`${API_URL}/tasks`, {
         method: "POST",
         headers: getAuthHeaders(),
-        body: JSON.stringify({ title, description: body, userIds }) // "body" pasa a "description" para MySQL
+        body: JSON.stringify({ title, description: body, userIds }) 
     });
     return await response.json();
 }
@@ -49,6 +50,7 @@ export async function eliminarTarea(taskId) {
         method: "DELETE", 
         headers: getAuthHeaders() 
     });
+    // Si la respuesta es 200, retornamos true.
     return response.ok;
 }
 
