@@ -8,6 +8,9 @@ export function getAuthHeaders() {
     };
 }
 
+// ==========================================
+// 🔥 LOGIN ADAPTADO A LA NUEVA ARQUITECTURA
+// ==========================================
 export async function loginConBackend(documento) {
     try {
         const response = await fetch(`${API_URL}/auth/login`, {
@@ -16,50 +19,46 @@ export async function loginConBackend(documento) {
             body: JSON.stringify({ document: documento })
         });
 
-        if (!response.ok) return null;
+        const json = await response.json();
+        
+        // Verificamos el nuevo estándar 'success'
+        if (!json.success) return null;
 
-        const data = await response.json();
-        localStorage.setItem('sena_token', data.token);
+        // El backend ahora devuelve { data: { user: {...}, token: "..." } }
+        localStorage.setItem('sena_token', json.data.token);
 
-        // Decodificamos el JWT
-        const payloadBase64 = data.token.split('.')[1];
-        const decodedPayload = JSON.parse(decodeURIComponent(escape(atob(payloadBase64))));
-
-        let userName = decodedPayload.name;
-
-        // 🛡️ PLAN B: Si el Backend no metió el nombre en el JWT, lo buscamos en MySQL
-        if (!userName) {
-            const userRes = await fetch(`${API_URL}/users/${decodedPayload.id}`, { headers: getAuthHeaders() });
-            if (userRes.ok) {
-                const userData = await userRes.json();
-                userName = userData.name;
-            } else {
-                userName = "Usuario (Sin Nombre)";
-            }
-        }
-
-        return {
-            id: decodedPayload.id,
-            role: decodedPayload.role,
-            name: userName,
-            document: documento
-        };
+        return json.data.user; 
     } catch (error) {
-        console.error("Error en el login:", error);
+        console.error("Error en login:", error);
         return null;
     }
 }
 
-export async function fetchUsuarioPorId(userId) {
-    const response = await fetch(`${API_URL}/users/${userId}`, { headers: getAuthHeaders() });
-    if (!response.ok) throw new Error("Error al obtener usuario");
-    return await response.json();
+// ==========================================
+// GESTIÓN DE USUARIOS (CRUD)
+// ==========================================
+export async function fetchTodosLosUsuarios() {
+    const response = await fetch(`${API_URL}/users`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+        cache: "no-store" 
+    });
+    if (!response.ok) throw new Error("Error al obtener usuarios");
+    
+    const json = await response.json();
+    return json.data || []; // Extraemos el arreglo de la propiedad 'data'
 }
 
-export async function fetchTodosLosUsuarios() {
-    const response = await fetch(`${API_URL}/users`, { headers: getAuthHeaders() });
-    if (!response.ok) throw new Error("Error al obtener usuarios (Token inválido o expirado)");
-    return await response.json();
+export async function fetchUsuarioPorId(userId) {
+    const response = await fetch(`${API_URL}/users/${userId}`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+        cache: "no-store"
+    });
+    if (!response.ok) throw new Error("Error al buscar el usuario");
+    
+    const json = await response.json();
+    return json.data;
 }
 
 export async function actualizarUsuario(userId, datosNuevos) {
@@ -70,22 +69,15 @@ export async function actualizarUsuario(userId, datosNuevos) {
     });
     
     if (!response.ok) throw new Error("Error al actualizar el usuario");
-    return await response.json();
+    const json = await response.json();
+    return json; // Retornamos todo el objeto por si script.js quiere usar json.message
 }
 
 export async function cambiarEstadoUsuario(userId, nuevoEstado) {
-    // 1. Buscamos la información completa del usuario actual
-    const usuarios = await fetchTodosLosUsuarios();
-    const usuarioCompleto = usuarios.find(u => u.id === userId);
-    
-    // 2. Le cambiamos únicamente el estado
-    usuarioCompleto.status = nuevoEstado;
-
-    // 3. Le enviamos a MySQL el objeto COMPLETO (Nombre, correo, documento, etc.)
-    const response = await fetch(`${API_URL}/users/${userId}`, {
-        method: "PUT",
+    const response = await fetch(`${API_URL}/users/${userId}/status`, {
+        method: "PATCH",
         headers: getAuthHeaders(),
-        body: JSON.stringify(usuarioCompleto) 
+        body: JSON.stringify({ status: nuevoEstado }) 
     });
     
     if (!response.ok) throw new Error("Error al cambiar el estado del usuario");
@@ -99,6 +91,6 @@ export async function crearUsuario(datosNuevos) {
         body: JSON.stringify(datosNuevos)
     });
     
-    if (!response.ok) throw new Error("Error al crear el usuario en la base de datos");
+    if (!response.ok) throw new Error("Error al crear usuario");
     return await response.json();
 }
