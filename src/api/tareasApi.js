@@ -1,15 +1,12 @@
 ﻿import { API_URL } from '../config/constants.js';
 import { getAuthHeaders } from './usuariosApi.js';
 
-// 🛡️ ADAPTADOR: Disfraza la tarea de MySQL para la UI y fuerza los tipos de datos
 function adaptarTarea(tarea) {
-    // Forzamos matemáticamente a que los IDs sean números (Number) para que el filtro no falle
     const idNumerico = tarea.userId ? Number(tarea.userId) : null;
-    
     return {
         ...tarea,
-        userId: idNumerico, // Aseguramos el ID principal
-        userIds: idNumerico ? [idNumerico] : [] // Aseguramos el array para tu lógica de UI
+        userId: idNumerico, 
+        userIds: idNumerico ? [idNumerico] : [] 
     };
 }
 
@@ -19,10 +16,11 @@ export async function fetchTareasPorUsuario(userId) {
         headers: getAuthHeaders(),
         cache: "no-store" 
     });
-    if (!response.ok) throw new Error("Error al obtener tareas");
+    if (!response.ok) throw new Error("Error al obtener tareas del usuario");
+    
     const json = await response.json();
-    const dataArray = json.data || json; // Escudo protector
-    return Array.isArray(dataArray) ? dataArray.map(adaptarTarea) : [];
+    const data = json.data || json;
+    return Array.isArray(data) ? data.map(adaptarTarea) : [];
 }
 
 export async function fetchTodasLasTareas() {
@@ -32,16 +30,17 @@ export async function fetchTodasLasTareas() {
         cache: "no-store" 
     });
     if (!response.ok) throw new Error("Error al obtener todas las tareas");
+    
     const json = await response.json();
-    const dataArray = json.data || json;
-    return Array.isArray(dataArray) ? dataArray.map(adaptarTarea) : [];
+    const data = json.data || json;
+    return Array.isArray(data) ? data.map(adaptarTarea) : [];
 }
 
 export async function crearTareaMultiple(title, body, userIds) {
     const response = await fetch(`${API_URL}/tasks`, {
         method: "POST",
         headers: getAuthHeaders(),
-        body: JSON.stringify({ title, description: body, userIds }) // "body" pasa a "description" para MySQL
+        body: JSON.stringify({ title, description: body, userIds }) 
     });
     return await response.json();
 }
@@ -84,7 +83,6 @@ export function prepararExportacion(tareas, usuario) {
 
 export async function eliminarMultiplesTareas(taskIds) {
     try {
-        // Ejecuta todas las peticiones DELETE al mismo tiempo
         const promesasEliminacion = taskIds.map(id => eliminarTarea(id));
         await Promise.all(promesasEliminacion);
         return true;
