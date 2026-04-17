@@ -3,19 +3,27 @@ import { showSuccessToast, showErrorToast } from './ui/components/notificaciones
 import { isValidInput, showError, clearError } from './utils/domHelpers.js';
 import { ordenarTareas, filtrarTareasPorEstado, procesarActualizacion, procesarDashboardProfesor } from './services/tareasService.js';
 import { createUserCard, createErrorCard, createProfessorDashboard } from './ui/tareasView.js';
-import { prepararExportacion, crearTareaMultiple, eliminarTarea, actualizarTarea, loginConBackend, fetchTodosLosUsuarios, actualizarUsuario, cambiarEstadoUsuario, crearUsuario } from './api/index.js';
+import { prepararExportacion, crearTareaMultiple, eliminarTarea, actualizarTarea, loginConBackend, fetchTodosLosUsuarios, actualizarUsuario, cambiarEstadoUsuario, crearUsuario, fetchTodasLasTareas, fetchTareasPorUsuario, eliminarMultiplesTareas } from './api/index.js';
 import { descargarJSON } from './ui/exportUI.js';
 
 // ============================================================
-// ELEMENTOS DEL DOM
+// VARIABLES DE ESTADO GLOBAL
 // ============================================================
-// ... (sigue tu código normal)
+let currentSelectedRole = ''; 
+let currentUserRole = '';
+let usuarioActual = null; 
+let estadoFiltroGlobal = 'todos';
+let criterioGlobal = 'fecha_desc';
+let origenGestorTareas = 'dashboard'; // 🔥 Guarda de dónde venimos
+
 // ============================================================
 // ELEMENTOS DEL DOM
 // ============================================================
 const viewRoles = document.getElementById('view-roles');
 const viewLogin = document.getElementById('view-login');
 const viewDashboard = document.getElementById('view-dashboard');
+const viewAdminUsers = document.getElementById('view-admin-users');
+const viewAdminTareas = document.getElementById('view-admin-tareas'); 
 const mainHeader = document.getElementById('mainHeader');
 
 const btnRolEstudiante = document.getElementById('btnRolEstudiante');
@@ -30,37 +38,34 @@ const loginError = document.getElementById('loginError');
 const resultadoUsuario = document.getElementById('resultadoUsuario');
 const headerSubtitle = document.getElementById('headerSubtitle');
 
-let currentSelectedRole = ''; 
-let currentUserRole = '';
-
 // ============================================================
 // EVENTOS DE NAVEGACIÓN
 // ============================================================
-btnRolEstudiante.addEventListener('click', () => {
+btnRolEstudiante?.addEventListener('click', () => {
     currentSelectedRole = 'user';
-    loginTitle.textContent = 'Ingreso Estudiante';
-    viewRoles.classList.add('hidden');
-    viewLogin.classList.remove('hidden');
+    if(loginTitle) loginTitle.textContent = 'Ingreso Estudiante';
+    viewRoles?.classList.add('hidden');
+    viewLogin?.classList.remove('hidden');
 });
 
-btnRolProfesor.addEventListener('click', () => {
+btnRolProfesor?.addEventListener('click', () => {
     currentSelectedRole = 'admin';
-    loginTitle.textContent = 'Ingreso Profesor';
-    viewRoles.classList.add('hidden');
-    viewLogin.classList.remove('hidden');
+    if(loginTitle) loginTitle.textContent = 'Ingreso Profesor';
+    viewRoles?.classList.add('hidden');
+    viewLogin?.classList.remove('hidden');
 });
 
-btnVolverRoles.addEventListener('click', () => {
-    viewLogin.classList.add('hidden');
-    viewRoles.classList.remove('hidden');
-    documentoInput.value = '';
+btnVolverRoles?.addEventListener('click', () => {
+    viewLogin?.classList.add('hidden');
+    viewRoles?.classList.remove('hidden');
+    if(documentoInput) documentoInput.value = '';
     clearError(loginError);
 });
 
 // ============================================================
 // EVENTO PRINCIPAL: LOGIN
 // ============================================================
-loginForm.addEventListener('submit', async (e) => {
+loginForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     clearError(loginError);
 
@@ -81,11 +86,12 @@ loginForm.addEventListener('submit', async (e) => {
             }
 
             currentUserRole = usuario.role;
+            usuarioActual = usuario; 
             showSuccessToast(`¡Bienvenido, ${usuario.name}!`);
             
-            mainHeader.classList.add('hidden');
-            viewLogin.classList.add('hidden');
-            viewDashboard.classList.remove('hidden');
+            mainHeader?.classList.add('hidden');
+            viewLogin?.classList.add('hidden');
+            viewDashboard?.classList.remove('hidden');
 
             if (currentUserRole === 'admin') {
                 renderizarVistaProfesor(usuario);
@@ -100,32 +106,26 @@ loginForm.addEventListener('submit', async (e) => {
     }
 });
 
-btnCerrarSesion.addEventListener('click', () => {
+btnCerrarSesion?.addEventListener('click', () => {
     localStorage.removeItem('sena_token');
-    mainHeader.classList.remove('hidden'); // ¡Obligatorio para destruir sesión!
-    viewDashboard.classList.add('hidden');
-    viewRoles.classList.remove('hidden');
-    resultadoUsuario.innerHTML = '';
-    documentoInput.value = '';
-    headerSubtitle.textContent = 'Selecciona tu perfil de ingreso';
+    mainHeader?.classList.remove('hidden');
+    viewDashboard?.classList.add('hidden');
+    viewRoles?.classList.remove('hidden');
+    if(resultadoUsuario) resultadoUsuario.innerHTML = '';
+    if(documentoInput) documentoInput.value = '';
+    if(headerSubtitle) headerSubtitle.textContent = 'Selecciona tu perfil de ingreso';
+    usuarioActual = null;
     showSuccessToast('Sesión cerrada correctamente');
 });
-
-// ============================================================
-// VARIABLES DE ESTADO GLOBAL PARA LOS FILTROS
-// ============================================================
-let estadoFiltroGlobal = 'todos';
-let criterioGlobal = 'fecha_desc';
 
 // ============================================================
 // RENDERIZADO: ESTUDIANTE
 // ============================================================
 async function renderizarVistaEstudiante(usuario, tareas = null) {
+    if(!resultadoUsuario) return;
     resultadoUsuario.innerHTML = '<div class="loading-spinner">Cargando tus tareas...</div>';
     try {
-        // 🛡️ PARCHE: Si venimos del Login, las tareas llegan nulas. Las buscamos aquí.
         if (!tareas) {
-            const { fetchTareasPorUsuario } = await import('./api/index.js');
             tareas = await fetchTareasPorUsuario(usuario.id);
         }
 
@@ -159,15 +159,15 @@ async function renderizarVistaEstudiante(usuario, tareas = null) {
 }
 
 // ============================================================
-// RENDERIZADO: PROFESOR (Con Modal Premium Corregido)
+// RENDERIZADO: PROFESOR
 // ============================================================
 async function renderizarVistaProfesor(usuario) {
+    if(!resultadoUsuario) return;
     resultadoUsuario.innerHTML = '<div class="loading-spinner">Cargando sistema...</div>';
     try {
         const { estudiantes, tareasGlobales } = await procesarDashboardProfesor();
         resultadoUsuario.innerHTML = '';
         
-        // Botón gigante para entrar a la gestión de usuarios
         const btnGestionUsuarios = document.createElement('button');
         btnGestionUsuarios.className = 'btn btn--primary shadow-glow'; 
         btnGestionUsuarios.style.marginBottom = '25px';
@@ -181,7 +181,7 @@ async function renderizarVistaProfesor(usuario) {
         const card = createProfessorDashboard(
             usuario, estudiantes, tareasGlobales,
             
-            // 1. MODAL PREMIUM DE ASIGNACIÓN (SENA PASTEL)
+            // 1. MODAL PREMIUM DE ASIGNACIÓN
             async () => {
                 const estudiantesHtml = estudiantes.map(est => `
                     <label class="modal-checkbox-item" style="display:flex; align-items:center; gap:12px; padding:12px; background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; cursor:pointer; transition:all 0.2s;">
@@ -233,7 +233,6 @@ async function renderizarVistaProfesor(usuario) {
                             btnSelectAll.textContent = allSelected ? 'Desmarcar Todos' : 'Marcar Todos';
                         });
 
-                        // Efecto hover y clic individual en checkboxes
                         checkboxes.forEach(cb => {
                             cb.addEventListener('change', (e) => {
                                 e.target.parentElement.style.background = e.target.checked ? 'var(--sena-green-pastel-bg)' : '#f9fafb';
@@ -243,21 +242,20 @@ async function renderizarVistaProfesor(usuario) {
                     },
                     preConfirm: () => {
                         const title = document.getElementById('swal-title').value.trim();
-                        const description = document.getElementById('swal-desc').value.trim(); // 🔥 CORREGIDO: description en vez de body
+                        const description = document.getElementById('swal-desc').value.trim(); 
                         const userIds = Array.from(document.querySelectorAll('input[name="swal-est-select"]:checked')).map(cb => cb.value);
                         
                         if (!title) { Swal.showValidationMessage('El título es obligatorio'); return false; }
                         if (!description) { Swal.showValidationMessage('La descripción es obligatoria'); return false; }
                         if (userIds.length === 0) { Swal.showValidationMessage('Selecciona al menos un estudiante'); return false; }
                         
-                        return { title, description, userIds }; // 🔥 CORREGIDO
+                        return { title, description, userIds }; 
                     }
                 });
 
                 if (formValues) {
                     try {
                         Swal.showLoading();
-                        // Enviamos TITLE y DESCRIPTION (No body)
                         await crearTareaMultiple(formValues.title, formValues.description, formValues.userIds);
                         showSuccessToast('¡Tarea asignada exitosamente!');
                         renderizarVistaProfesor(usuario);
@@ -304,7 +302,7 @@ async function renderizarVistaProfesor(usuario) {
 
             // 4. ELIMINAR TAREA
             async (tareaId) => {
-                const result = await Swal.fire({ title: '¿Eliminar tarea?', text: "Esta acción es irreversible", icon: 'warning', showCancelButton: true, confirmButtonColor: 'var(--danger)', confirmButtonText: 'Sí, eliminar' });
+                const result = await Swal.fire({ title: '¿Eliminar tarea?', text: "Esta acción es irreversible", icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Sí, eliminar' });
                 if (result.isConfirmed) { 
                     try {
                         await eliminarTarea(tareaId); 
@@ -329,29 +327,26 @@ async function renderizarVistaProfesor(usuario) {
 }
 
 // ============================================================
-// MÓDULO DE ADMINISTRACIÓN DE USUARIOS (VISTA DEDICADA)
+// MÓDULO DE ADMINISTRACIÓN DE USUARIOS
 // ============================================================
-const viewAdminUsers = document.getElementById('view-admin-users');
 const btnVolverProfesor = document.getElementById('btnVolverProfesor');
 const tbodyUsuariosAdmin = document.getElementById('tbodyUsuariosAdmin');
 
-// Navegación: Volver al dashboard de tareas
 if (btnVolverProfesor) {
     btnVolverProfesor.addEventListener('click', () => {
-        viewAdminUsers.classList.add('hidden');
-        viewDashboard.classList.remove('hidden');
+        viewAdminUsers?.classList.add('hidden');
+        viewDashboard?.classList.remove('hidden');
     });
 }
 
-// Función Principal: Cargar y pintar la tabla
 window.abrirPanelUsuarios = async function() {
-    viewDashboard.classList.add('hidden');
-    viewAdminUsers.classList.remove('hidden');
-    tbodyUsuariosAdmin.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px;">Cargando usuarios...</td></tr>';
+    viewDashboard?.classList.add('hidden');
+    viewAdminUsers?.classList.remove('hidden');
+    if(tbodyUsuariosAdmin) tbodyUsuariosAdmin.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px;">Cargando usuarios...</td></tr>';
 
     try {
         const usuariosList = await fetchTodosLosUsuarios();
-        tbodyUsuariosAdmin.innerHTML = '';
+        if(tbodyUsuariosAdmin) tbodyUsuariosAdmin.innerHTML = '';
 
         usuariosList.forEach(userItem => {
             const tr = document.createElement('tr');
@@ -362,7 +357,6 @@ window.abrirPanelUsuarios = async function() {
             const btnEstadoTexto = userItem.status === 'activo' ? 'Desactivar' : 'Activar';
             const btnEstadoClase = userItem.status === 'activo' ? 'btn--danger' : 'btn--primary';
 
-            // Codificamos el objeto completo para pasarlo por HTML
             const userEncoded = encodeURIComponent(JSON.stringify(userItem));
 
             tr.innerHTML = `
@@ -376,17 +370,15 @@ window.abrirPanelUsuarios = async function() {
                     <button class="btn ${btnEstadoClase} btn--sm" onclick="cambiarEstadoUI('${userEncoded}')">${btnEstadoTexto}</button>
                 </td>
             `;
-            tbodyUsuariosAdmin.appendChild(tr);
+            if(tbodyUsuariosAdmin) tbodyUsuariosAdmin.appendChild(tr);
         });
     } catch (error) {
-        tbodyUsuariosAdmin.innerHTML = '<tr><td colspan="6" style="text-align:center; color: red;">Error al cargar la base de datos.</td></tr>';
+        if(tbodyUsuariosAdmin) tbodyUsuariosAdmin.innerHTML = '<tr><td colspan="6" style="text-align:center; color: red;">Error al cargar la base de datos.</td></tr>';
     }
 };
 
-// Lógica de Edición
 window.editarUsuarioUI = async function(userDataEncoded) {
     const userObject = JSON.parse(decodeURIComponent(userDataEncoded));
-    
     const { value: formValues } = await Swal.fire({
         title: 'Editar Información',
         html: `
@@ -402,16 +394,12 @@ window.editarUsuarioUI = async function(userDataEncoded) {
                 </select>
             </div>
         `,
-        focusConfirm: false,
-        showCancelButton: true,
-        confirmButtonColor: 'var(--sena-green-pastel)',
-        confirmButtonText: 'Guardar Cambios',
+        focusConfirm: false, showCancelButton: true, confirmButtonColor: 'var(--sena-green-pastel)', confirmButtonText: 'Guardar Cambios',
         preConfirm: () => {
             return {
                 name: document.getElementById('swal-u-name').value.trim(),
                 document: document.getElementById('swal-u-doc').value.trim(),
                 role: document.getElementById('swal-u-role').value,
-                // Mantenemos los datos obligatorios para evitar el Error 500
                 email: userObject.email, 
                 status: userObject.status
             }
@@ -424,82 +412,63 @@ window.editarUsuarioUI = async function(userDataEncoded) {
             await actualizarUsuario(userObject.id, formValues);
             showSuccessToast('Usuario actualizado en MySQL');
             abrirPanelUsuarios(); 
-        } catch (error) {
-            showErrorToast('Error al actualizar');
-        }
+        } catch (error) { showErrorToast('Error al actualizar'); }
     }
 };
 
-// Lógica de Cambio de Estado
 window.cambiarEstadoUI = async function(userDataEncoded) {
     const userObject = JSON.parse(decodeURIComponent(userDataEncoded));
     const nextStatus = userObject.status === 'activo' ? 'inactivo' : 'activo';
     const actionText = nextStatus === 'inactivo' ? 'desactivar' : 'activar';
+
+    if (nextStatus === 'inactivo') {
+        Swal.showLoading();
+        const tareas = await fetchTareasPorUsuario(userObject.id);
+        const pendientes = tareas.filter(t => t.status.toLowerCase() !== 'completada');
+        if (pendientes.length > 0) {
+            Swal.close();
+            return showErrorToast(`Bloqueado: El estudiante tiene ${pendientes.length} tareas pendientes.`);
+        }
+    }
     
     const result = await Swal.fire({
-        title: 'Confirmar acción',
-        text: `¿Deseas ${actionText} a este usuario?`,
-        showCancelButton: true,
-        confirmButtonColor: nextStatus === 'inactivo' ? 'var(--danger)' : 'var(--sena-green-pastel)',
-        confirmButtonText: `Sí, ${actionText}`
+        title: 'Confirmar acción', text: `¿Deseas ${actionText} a este usuario?`,
+        showCancelButton: true, confirmButtonColor: nextStatus === 'inactivo' ? '#ef4444' : 'var(--sena-green-pastel)', confirmButtonText: `Sí, ${actionText}`
     });
 
     if (result.isConfirmed) {
         try {
-            // Reconstruimos el usuario completo con el nuevo estado
             const updatedUserPayload = {
-                name: userObject.name,
-                document: userObject.document,
-                email: userObject.email,
-                role: userObject.role,
-                status: nextStatus
+                name: userObject.name, document: userObject.document,
+                email: userObject.email, role: userObject.role, status: nextStatus
             };
-            
+            Swal.showLoading();
             await actualizarUsuario(userObject.id, updatedUserPayload);
             showSuccessToast(`Usuario ${nextStatus} correctamente`);
             abrirPanelUsuarios(); 
-        } catch (error) {
-            showErrorToast('Error al procesar la solicitud');
-        }
+        } catch (error) { showErrorToast('Error al procesar la solicitud'); }
     }
 };
-// Lógica de Creación (Nuevo Usuario)
+
 window.crearUsuarioUI = async function() {
     const { value: formValues } = await Swal.fire({
         title: 'Crear Nuevo Usuario',
         html: `
             <div class="swal-admin-form">
-                <label>Nombre Completo</label>
-                <input id="swal-c-name" class="swal2-input" placeholder="Ej: Juan Pérez">
-                
-                <label>Documento de Identidad</label>
-                <input id="swal-c-doc" class="swal2-input" type="number" placeholder="Ej: 1098765432">
-                
-                <label>Correo Electrónico</label>
-                <input id="swal-c-email" class="swal2-input" type="email" placeholder="Ej: juan@sena.edu.co">
-                
+                <label>Nombre Completo</label><input id="swal-c-name" class="swal2-input" placeholder="Ej: Juan Pérez">
+                <label>Documento de Identidad</label><input id="swal-c-doc" class="swal2-input" type="number" placeholder="Ej: 1098765432">
+                <label>Correo Electrónico</label><input id="swal-c-email" class="swal2-input" type="email" placeholder="Ej: juan@sena.edu.co">
                 <label>Rol en el Sistema</label>
-                <select id="swal-c-role" class="swal2-select">
-                    <option value="user">Estudiante</option>
-                    <option value="admin">Profesor (Admin)</option>
-                </select>
+                <select id="swal-c-role" class="swal2-select"><option value="user">Estudiante</option><option value="admin">Profesor (Admin)</option></select>
             </div>
         `,
-        focusConfirm: false,
-        showCancelButton: true,
-        confirmButtonColor: '#7c3aed',
-        confirmButtonText: 'Crear Usuario',
-        cancelButtonText: 'Cancelar',
+        focusConfirm: false, showCancelButton: true, confirmButtonColor: '#7c3aed', confirmButtonText: 'Crear Usuario',
         preConfirm: () => {
             const name = document.getElementById('swal-c-name').value.trim();
             const documentVal = document.getElementById('swal-c-doc').value.trim();
             const email = document.getElementById('swal-c-email').value.trim();
             const role = document.getElementById('swal-c-role').value;
-
-            if (!name || !documentVal || !email) {
-                Swal.showValidationMessage('Por favor completa todos los campos');
-                return false;
-            }
+            if (!name || !documentVal || !email) { Swal.showValidationMessage('Completa todos los campos'); return false; }
             return { name, document: documentVal, email, role };
         }
     });
@@ -509,9 +478,145 @@ window.crearUsuarioUI = async function() {
             Swal.showLoading();
             await crearUsuario(formValues);
             showSuccessToast('Usuario creado exitosamente');
-            abrirPanelUsuarios(); // Recargamos la tabla para ver al nuevo usuario
-        } catch (error) {
-            showErrorToast('Error al crear: Verifica que el documento o correo no existan ya.');
-        }
+            abrirPanelUsuarios(); 
+        } catch (error) { showErrorToast('Error al crear usuario.'); }
     }
 };
+
+// ============================================================
+// GESTOR GLOBAL DE TAREAS (AHORA CRUZA DATOS PARA MOSTRAR NOMBRES)
+// ============================================================
+
+// 🔥 Función global inteligente
+window.abrirPanelGestorTareas = async function(origen = 'dashboard') {
+    origenGestorTareas = origen; 
+    viewDashboard?.classList.add('hidden');
+    viewAdminUsers?.classList.add('hidden');
+    viewAdminTareas?.classList.remove('hidden');
+
+    // Ajusta el texto del botón de volver según de dónde vengas
+    const btnVolver = document.getElementById('btnVolverUsuariosDesdeTareas');
+    if (btnVolver) {
+        btnVolver.innerHTML = origen === 'usuarios' ? '<span>←</span> Volver a Usuarios' : '<span>←</span> Volver al Dashboard';
+    }
+
+    Swal.showLoading();
+    try {
+        // Traemos todo de la base de datos para cruzar IDs
+        const tareas = await fetchTodasLasTareas();
+        const usuarios = await fetchTodosLosUsuarios();
+        Swal.close();
+
+        const tbodyGlobal = document.getElementById('tbodyTareasGlobal');
+        if(tbodyGlobal) {
+            tbodyGlobal.innerHTML = tareas.map(t => {
+                // Buscamos el nombre del estudiante al que le pertenece la tarea
+                const estudianteEncontrado = usuarios.find(u => u.id === t.userId);
+                const nombreReal = estudianteEncontrado ? estudianteEncontrado.name : `Usuario Eliminado (ID: ${t.userId})`;
+
+                return `
+                    <tr>
+                        <td><input type="checkbox" class="cb-tarea-global" value="${t.id}"></td>
+                        <td>#${t.id}</td>
+                        <td><strong>${t.title}</strong></td>
+                        <td style="color: var(--text-main); font-weight: 500;">${nombreReal}</td>
+                        <td><span class="badge badge--${t.status.replace(/\s+/g, '-')}">${t.status}</span></td>
+                        <td style="text-align: center;">
+                            <button class="btn btn--danger btn--sm" onclick="borrarUnaTareaGlobal(${t.id})">🗑️</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+    } catch(error) {
+        Swal.close();
+        showErrorToast('Error al cargar los datos cruzados');
+    }
+};
+
+// Si haces clic desde la tabla de usuarios
+const btnIrAGestionTareas = document.getElementById('btnIrAGestionTareas');
+if (btnIrAGestionTareas) {
+    btnIrAGestionTareas.addEventListener('click', () => {
+        if(window.abrirPanelGestorTareas) window.abrirPanelGestorTareas('usuarios');
+    });
+}
+
+// Botón de Volver (Inteligente)
+document.getElementById('btnVolverUsuariosDesdeTareas')?.addEventListener('click', () => {
+    viewAdminTareas?.classList.add('hidden');
+    if (origenGestorTareas === 'usuarios') {
+        viewAdminUsers?.classList.remove('hidden');
+    } else {
+        viewDashboard?.classList.remove('hidden');
+        // Si regresamos al dashboard, lo recargamos para asegurar que muestre la tabla de tareas actualizadas
+        if (usuarioActual) renderizarVistaProfesor(usuarioActual);
+    }
+});
+
+document.addEventListener('change', (e) => {
+    if (e.target.classList.contains('cb-tarea-global') || e.target.id === 'cb-todos-global') {
+        if (e.target.id === 'cb-todos-global') {
+            document.querySelectorAll('.cb-tarea-global').forEach(cb => cb.checked = e.target.checked);
+        }
+        const seleccionados = document.querySelectorAll('.cb-tarea-global:checked');
+        const btnBorrar = document.getElementById('btnBorrarSeleccionadasGlobal');
+        if(btnBorrar) {
+            document.getElementById('contadorBorradoGlobal').textContent = seleccionados.length;
+            seleccionados.length > 0 ? btnBorrar.classList.remove('hidden') : btnBorrar.classList.add('hidden');
+        }
+    }
+});
+
+document.getElementById('btnBorrarSeleccionadasGlobal')?.addEventListener('click', async () => {
+    const ids = Array.from(document.querySelectorAll('.cb-tarea-global:checked')).map(cb => Number(cb.value));
+    const result = await Swal.fire({
+        title: '¿Eliminar masivamente?', text: `Borrarás ${ids.length} tareas.`, icon: 'warning',
+        showCancelButton: true, confirmButtonColor: '#E65100', confirmButtonText: 'Sí, borrarlas'
+    });
+    if (result.isConfirmed) {
+        Swal.showLoading();
+        await eliminarMultiplesTareas(ids);
+        showSuccessToast('Tareas eliminadas');
+        window.abrirPanelGestorTareas(origenGestorTareas); // Recarga y mantiene tu contexto
+    }
+});
+
+window.borrarUnaTareaGlobal = async function(id) {
+    Swal.showLoading();
+    await eliminarTarea(id);
+    showSuccessToast('Tarea eliminada');
+    window.abrirPanelGestorTareas(origenGestorTareas);
+};
+
+// ============================================================
+// PERSISTENCIA F5 (Auto-Login Seguro)
+// ============================================================
+document.addEventListener('DOMContentLoaded', async () => {
+    const token = localStorage.getItem('sena_token');
+    if (!token || token.split('.').length !== 3) return;
+
+    try {
+        const payload = JSON.parse(decodeURIComponent(escape(atob(token.split('.')[1]))));
+        
+        usuarioActual = {
+            id: payload.id,
+            name: payload.name || "Usuario", 
+            role: payload.role
+        };
+
+        viewRoles?.classList.add('hidden');
+        mainHeader?.classList.add('hidden');
+        
+        if (usuarioActual.role === 'admin') {
+            await renderizarVistaProfesor(usuarioActual);
+        } else {
+            await renderizarVistaEstudiante(usuarioActual);
+        }
+        
+        btnCerrarSesion?.classList.remove('hidden');
+    } catch (e) { 
+        console.warn("Sesión inválida, limpiando caché...");
+        localStorage.removeItem('sena_token'); 
+    }
+});

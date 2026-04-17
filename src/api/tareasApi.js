@@ -17,22 +17,24 @@ export async function fetchTareasPorUsuario(userId) {
     const response = await fetch(`${API_URL}/users/${userId}/tasks`, { 
         method: "GET",
         headers: getAuthHeaders(),
-        cache: "no-store" // 🔥 OBLIGA A TRAER DATOS FRESCOS DE MYSQL
+        cache: "no-store" 
     });
-    if (!response.ok) throw new Error("Error al obtener tareas del usuario");
-    const data = await response.json();
-    return Array.isArray(data) ? data.map(adaptarTarea) : [];
+    if (!response.ok) throw new Error("Error al obtener tareas");
+    const json = await response.json();
+    const dataArray = json.data || json; // Escudo protector
+    return Array.isArray(dataArray) ? dataArray.map(adaptarTarea) : [];
 }
 
 export async function fetchTodasLasTareas() {
     const response = await fetch(`${API_URL}/tasks`, { 
         method: "GET",
         headers: getAuthHeaders(),
-        cache: "no-store" // 🔥 OBLIGA A TRAER DATOS FRESCOS DE MYSQL
+        cache: "no-store" 
     });
     if (!response.ok) throw new Error("Error al obtener todas las tareas");
-    const data = await response.json();
-    return Array.isArray(data) ? data.map(adaptarTarea) : [];
+    const json = await response.json();
+    const dataArray = json.data || json;
+    return Array.isArray(dataArray) ? dataArray.map(adaptarTarea) : [];
 }
 
 export async function crearTareaMultiple(title, body, userIds) {
@@ -78,4 +80,16 @@ export function prepararExportacion(tareas, usuario) {
         totalTareas: tareas.length,
         tareas: tareas
     }, null, 2);
+}
+
+export async function eliminarMultiplesTareas(taskIds) {
+    try {
+        // Ejecuta todas las peticiones DELETE al mismo tiempo
+        const promesasEliminacion = taskIds.map(id => eliminarTarea(id));
+        await Promise.all(promesasEliminacion);
+        return true;
+    } catch (error) {
+        console.error("Error en borrado masivo:", error);
+        throw new Error("Algunas tareas no pudieron ser eliminadas");
+    }
 }

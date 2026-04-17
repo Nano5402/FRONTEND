@@ -1,17 +1,14 @@
-﻿// src/ui/tareasView.js
-import { ordenarTareas, filtrarTareasPorEstado } from '../services/tareasService.js';
+﻿import { ordenarTareas, filtrarTareasPorEstado } from '../services/tareasService.js';
 
 function getStatusBadge(status) {
     let badgeClass = 'badge--pendiente';
     let icon = '⏳';
-    if (status === 'en progreso') { badgeClass = 'badge--progreso'; icon = '🚀'; }
-    if (status === 'completada') { badgeClass = 'badge--completada'; icon = '✅'; }
+    const s = status.toLowerCase();
+    if (s === 'en progreso') { badgeClass = 'badge--progreso'; icon = '🚀'; }
+    if (s === 'completada') { badgeClass = 'badge--completada'; icon = '✅'; }
     return `<span class="badge ${badgeClass}">${icon} ${status}</span>`;
 }
 
-// ==========================================
-// VISTA ESTUDIANTE (Rediseñada y con vida)
-// ==========================================
 export function createUserCard(usuario, tareas, tareasAMostrar, estadoFiltro, criterioOrden, onCrearTarea, onEditar, onToggle, onEliminar, onFiltrar, onOrdenar, onExportar) {
     const card = document.createElement('div');
     card.classList.add('student-dashboard-wrapper');
@@ -45,7 +42,6 @@ export function createUserCard(usuario, tareas, tareasAMostrar, estadoFiltro, cr
                 </select>
             </div>
         </div>
-        
         <div id="listaTareasEstudiante" class="tasks-grid"></div>
     `;
 
@@ -54,7 +50,6 @@ export function createUserCard(usuario, tareas, tareasAMostrar, estadoFiltro, cr
     if (onOrdenar) card.querySelector('#ordenCriterio').onchange = (e) => onOrdenar(e.target.value);
 
     const lista = card.querySelector('#listaTareasEstudiante');
-    
     if (tareasAMostrar.length === 0) {
         lista.innerHTML = '<div class="empty-state"><h3>Sin tareas</h3><p>No tienes tareas bajo estos filtros.</p></div>';
     } else {
@@ -66,21 +61,20 @@ export function createUserCard(usuario, tareas, tareasAMostrar, estadoFiltro, cr
                     <h4 class="task-title">${tarea.title}</h4>
                     ${getStatusBadge(tarea.status)}
                 </div>
-               <p class="task-body">${tarea.description || 'Sin descripción detallada.'}</p>
+                <p class="task-body">${tarea.description || 'Sin descripción detallada.'}</p>
                 <div class="actions-container"></div>
             `;
-
             const actions = tDiv.querySelector('.actions-container');
             if (onToggle) {
                 if (tarea.status === 'pendiente') {
                     const btn = document.createElement('button');
                     btn.className = `btn btn--primary btn--full`;
-                    btn.innerHTML = '🚀 Iniciar Tarea (Pasar a En Progreso)';
+                    btn.innerHTML = '🚀 Iniciar Tarea';
                     btn.onclick = () => onToggle(tarea.id, 'en progreso');
                     actions.appendChild(btn);
                 } else if (tarea.status === 'en progreso') {
-                    actions.innerHTML = '<div class="status-notice info">Estás trabajando en esta tarea 🏃‍♂️</div>';
-                } else if (tarea.status === 'completada') {
+                    actions.innerHTML = '<div class="status-notice info">Estás trabajando aquí 🏃‍♂️</div>';
+                } else {
                     actions.innerHTML = '<div class="status-notice success">Tarea finalizada 🎉</div>';
                 }
             }
@@ -90,28 +84,23 @@ export function createUserCard(usuario, tareas, tareasAMostrar, estadoFiltro, cr
     return card;
 }
 
-// ==========================================
-// VISTA PROFESOR (Con Filtros y Orden)
-// ==========================================
 export function createProfessorDashboard(profesor, estudiantes, tareasGlobales, onAbrirModalCrear, onEditar, onToggle, onEliminar, onExportar) {
     const container = document.createElement('div');
     container.className = 'dashboard-container';
-    
     container.innerHTML = `
         <div class="dashboard-header-actions">
             <div>
                 <h2 class="dashboard-title">¡Bienvenido, Profesor ${profesor.name}!</h2>
-                <p style="color:var(--text-muted)">Selecciona un estudiante para gestionar sus tareas.</p>
+                <p style="color:var(--text-muted)">Gestiona las tareas de tus estudiantes.</p>
             </div>
             <div class="header-buttons">
-                <button id="btnCrearNueva" class="btn btn--primary btn--large shadow-glow">➕ Asignar Nueva Tarea</button>
-                <button id="btnExportarTodo" class="btn btn--outline">⬇ Exportar Sistema</button>
+                <button id="btnGestionarTareasGlobales" class="btn btn--outline">📋 Tareas Globales</button>
+                <button id="btnCrearNueva" class="btn btn--primary shadow-glow">➕ Asignar Tarea</button>
             </div>
         </div>
-
         <div class="dashboard-grid">
             <aside class="card sidebar-card">
-                <h3 class="section-title">👥 Tus Estudiantes</h3>
+                <h3 class="section-title">👥 Estudiantes</h3>
                 <div class="students-list-wrapper">
                     ${estudiantes.map(est => `
                         <div class="student-item" data-id="${est.id}" data-nombre="${est.name}">
@@ -119,115 +108,85 @@ export function createProfessorDashboard(profesor, estudiantes, tareasGlobales, 
                                 <span class="student-avatar">${est.name.charAt(0)}</span>
                                 <span class="student-name">${est.name}</span>
                             </div>
-                            <span class="chevron">→</span>
                         </div>
                     `).join('')}
                 </div>
             </aside>
-
             <main class="card main-panel-card">
                 <div class="main-panel-header">
                     <h3 id="tituloTareasEstudiante" class="section-title mb-0">Selecciona un estudiante</h3>
-                    <button id="btnExportarEstudiante" class="btn btn--outline btn--sm hidden">⬇ Exportar Alumno</button>
-                </div>
-                
-                <div id="profesorControls" class="controls-bar hidden" style="margin-bottom: 20px;">
-                    <select id="profFiltroEstado" class="form__input form__select"><option value="todos">Todos los estados</option><option value="pendiente">Pendientes</option><option value="en progreso">En Progreso</option><option value="completada">Completadas</option></select>
-                    <select id="profOrdenCriterio" class="form__input form__select"><option value="fecha_desc">Nuevas primero</option><option value="fecha_asc">Antiguas primero</option><option value="az">A-Z</option><option value="za">Z-A</option></select>
-                </div>
-
-                <div id="contenedorTareasEstudiante" class="tasks-list-container">
-                    <div class="empty-state illustration-state">
-                        <span style="font-size: 3rem;">📂</span>
-                        <p>Haz clic en un estudiante de la lista izquierda.</p>
+                    <div id="profesorControls" class="hidden" style="display: flex; gap: 10px; align-items: center;">
+                        <select id="profFiltroEstado" class="form__input form__select"><option value="todos">Todos</option><option value="pendiente">Pendientes</option><option value="en progreso">En Progreso</option><option value="completada">Completadas</option></select>
+                        <button id="btnBorradoMasivo" class="btn btn--danger btn--sm hidden">🗑️ Borrar Seleccionadas</button>
                     </div>
+                </div>
+                <div id="contenedorTareasEstudiante" class="tasks-list-container">
+                    <div class="empty-state"><p>Haz clic en un estudiante para ver sus tareas.</p></div>
                 </div>
             </main>
         </div>
     `;
 
-    container.querySelector('#btnCrearNueva').addEventListener('click', onAbrirModalCrear);
-    container.querySelector('#btnExportarTodo').addEventListener('click', () => onExportar(tareasGlobales, 'sistema-completo.json'));
+    // 🔥 CONECTADO A LA FUNCIÓN GLOBAL
+    container.querySelector('#btnGestionarTareasGlobales').onclick = () => {
+        if(window.abrirPanelGestorTareas) window.abrirPanelGestorTareas('dashboard');
+    };
+    
+    container.querySelector('#btnCrearNueva').onclick = onAbrirModalCrear;
 
     const itemsEstudiantes = container.querySelectorAll('.student-item');
     const contenedorTareas = container.querySelector('#contenedorTareasEstudiante');
     const tituloTareas = container.querySelector('#tituloTareasEstudiante');
-    const btnExportarEst = container.querySelector('#btnExportarEstudiante');
     const profControls = container.querySelector('#profesorControls');
-    
-    const selectFiltro = container.querySelector('#profFiltroEstado');
-    const selectOrden = container.querySelector('#profOrdenCriterio');
 
     let currentEstId = null;
-    let currentEstNombre = null;
 
-    // Función interna para renderizar con filtros
     function renderizarTareas() {
         if (!currentEstId) return;
-        
-// 🔥 Filtramos usando exactamente la misma lógica que usa MySQL (userId)
-let tareasEstudiante = tareasGlobales.filter(t => String(t.userId) === String(currentEstId));
-        tareasEstudiante = filtrarTareasPorEstado(tareasEstudiante, selectFiltro.value);
-        tareasEstudiante = ordenarTareas(tareasEstudiante, selectOrden.value);
+        const filtro = container.querySelector('#profFiltroEstado').value;
+        let tareas = tareasGlobales.filter(t => String(t.userId) === String(currentEstId));
+        if (filtro !== 'todos') tareas = tareas.filter(t => t.status === filtro);
 
-        btnExportarEst.onclick = () => onExportar(tareasEstudiante, `tareas-${currentEstNombre.replace(/\s+/g, '-').toLowerCase()}.json`);
-
-        if (tareasEstudiante.length === 0) {
-            contenedorTareas.innerHTML = `<div class="empty-state"><p>No se encontraron tareas con estos filtros.</p></div>`;
+        contenedorTareas.innerHTML = '';
+        if (tareas.length === 0) {
+            contenedorTareas.innerHTML = '<p class="empty-state">No hay tareas.</p>';
             return;
         }
 
-        contenedorTareas.innerHTML = '';
-        tareasEstudiante.forEach(tarea => {
+        tareas.forEach(tarea => {
             const item = document.createElement('div');
-            item.className = `task-item card border-${tarea.status.replace(/\s+/g, '-')}`;
+            item.className = 'task-item card';
+            item.style.display = 'flex';
             item.innerHTML = `
-                <div class="task-item__header">
-                    <h4 class="task-title">${tarea.title}</h4>
-                    ${getStatusBadge(tarea.status)}
-                </div>
-                    <p class="task-body">${tarea.description || 'Sin descripción detallada.'}</p>
-                <div class="actions-prof-footer">
-                    <div class="main-actions">
-                        <button class="btn btn--sm ${tarea.status === 'pendiente' ? 'btn--primary' : 'btn--secondary'} btn-toggle-status">
-                            ${tarea.status === 'pendiente' ? '▶ Iniciar' : (tarea.status === 'en progreso' ? '✅ Completar' : '🔄 Reabrir')}
-                        </button>
+                <input type="checkbox" class="cb-eliminar-masivo" value="${tarea.id}" style="margin-right: 15px;">
+                <div style="flex-grow: 1;">
+                    <div class="task-item__header">
+                        <h4 class="task-title">${tarea.title}</h4>
+                        ${getStatusBadge(tarea.status)}
                     </div>
-                    <div class="secondary-actions">
-                        <button class="btn btn--warning btn--sm btn-edit">✏️ Editar</button>
-                        <button class="btn btn--danger btn--sm btn-delete">🗑️ Eliminar</button>
+                    <div class="secondary-actions" style="margin-top: 10px;">
+                        <button class="btn btn--warning btn--sm btn-edit">✏️</button>
+                        <button class="btn btn--danger btn--sm btn-delete">🗑️</button>
                     </div>
                 </div>
             `;
-            
-            item.querySelector('.btn-toggle-status').onclick = () => onToggle(tarea.id, tarea.status === 'pendiente' ? 'en progreso' : (tarea.status === 'en progreso' ? 'completada' : 'pendiente'));
             item.querySelector('.btn-edit').onclick = () => onEditar(tarea);
             item.querySelector('.btn-delete').onclick = () => onEliminar(tarea.id);
-
             contenedorTareas.appendChild(item);
         });
     }
 
-    // Disparadores de filtros del profesor
-    selectFiltro.addEventListener('change', renderizarTareas);
-    selectOrden.addEventListener('change', renderizarTareas);
+    container.querySelector('#profFiltroEstado').onchange = renderizarTareas;
 
     itemsEstudiantes.forEach(item => {
-        item.addEventListener('click', (e) => {
+        item.onclick = (e) => {
             itemsEstudiantes.forEach(i => i.classList.remove('active'));
-            const currentItem = e.currentTarget;
-            currentItem.classList.add('active');
-
-            currentEstId = currentItem.dataset.id;
-            currentEstNombre = currentItem.dataset.nombre;
-            
-            tituloTareas.textContent = `Gestión: ${currentEstNombre}`;
-            btnExportarEst.classList.remove('hidden');
+            item.classList.add('active');
+            currentEstId = item.dataset.id;
+            tituloTareas.textContent = `Tareas de ${item.dataset.nombre}`;
             profControls.classList.remove('hidden');
-            profControls.style.display = 'flex'; 
-            
             renderizarTareas();
-        });
+        };
     });
 
     return container;

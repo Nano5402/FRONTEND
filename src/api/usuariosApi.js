@@ -19,20 +19,39 @@ export async function loginConBackend(documento) {
         if (!response.ok) return null;
 
         const data = await response.json();
-        localStorage.setItem('sena_token', data.token);
+        
+        // 🐛 DEBUG: Veamos qué nos está enviando el backend exactamente
+        console.log("Respuesta cruda del backend:", data);
 
-        // Decodificamos el JWT
-        const payloadBase64 = data.token.split('.')[1];
+        // 🛡️ Búsqueda inteligente del token (Cubre múltiples estructuras)
+        const tokenValido = data.token || (data.data && data.data.token) || data.data;
+
+        // Si definitivamente no llegó el token, abortamos limpiamente
+        if (!tokenValido || typeof tokenValido !== 'string') {
+            console.error("Error: El backend no devolvió un JWT válido. Revisa la consola.");
+            return null;
+        }
+
+        localStorage.setItem('sena_token', tokenValido);
+
+        // Decodificamos el JWT con seguridad de que sí existe
+        const payloadBase64 = tokenValido.split('.')[1];
         const decodedPayload = JSON.parse(decodeURIComponent(escape(atob(payloadBase64))));
 
         let userName = decodedPayload.name;
 
         // 🛡️ PLAN B: Si el Backend no metió el nombre en el JWT, lo buscamos en MySQL
         if (!userName) {
-            const userRes = await fetch(`${API_URL}/users/${decodedPayload.id}`, { headers: getAuthHeaders() });
+            const userRes = await fetch(`${API_URL}/users/${decodedPayload.id}`, { 
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${tokenValido}` 
+                } 
+            });
+            
             if (userRes.ok) {
                 const userData = await userRes.json();
-                userName = userData.name;
+                userName = userData.name || (userData.data && userData.data.name) || "Usuario (Sin Nombre)";
             } else {
                 userName = "Usuario (Sin Nombre)";
             }
@@ -45,21 +64,29 @@ export async function loginConBackend(documento) {
             document: documento
         };
     } catch (error) {
-        console.error("Error en el login:", error);
+        console.error("Error catastrófico en el login:", error);
         return null;
     }
 }
 
+// 🔥 LA FUNCIÓN QUE FALTABA (Ahora con escudo protector)
 export async function fetchUsuarioPorId(userId) {
     const response = await fetch(`${API_URL}/users/${userId}`, { headers: getAuthHeaders() });
     if (!response.ok) throw new Error("Error al obtener usuario");
-    return await response.json();
+    const json = await response.json();
+    return json.data || json; 
 }
 
 export async function fetchTodosLosUsuarios() {
-    const response = await fetch(`${API_URL}/users`, { headers: getAuthHeaders() });
-    if (!response.ok) throw new Error("Error al obtener usuarios (Token inválido o expirado)");
-    return await response.json();
+    const response = await fetch(`${API_URL}/users`, { 
+        method: "GET",
+        headers: getAuthHeaders(),
+        cache: "no-store" 
+    });
+    if (!response.ok) throw new Error("Error al obtener usuarios");
+    const json = await response.json();
+    const dataArray = json.data || json;
+    return Array.isArray(dataArray) ? dataArray : [];
 }
 
 export async function actualizarUsuario(userId, datosNuevos) {
@@ -74,22 +101,24 @@ export async function actualizarUsuario(userId, datosNuevos) {
 }
 
 export async function cambiarEstadoUsuario(userId, nuevoEstado) {
-    // 1. Buscamos la información completa del usuario actual
     const usuarios = await fetchTodosLosUsuarios();
     const usuarioCompleto = usuarios.find(u => u.id === userId);
-    
-    // 2. Le cambiamos únicamente el estado
     usuarioCompleto.status = nuevoEstado;
 
-    // 3. Le enviamos a MySQL el objeto COMPLETO (Nombre, correo, documento, etc.)
     const response = await fetch(`${API_URL}/users/${userId}`, {
         method: "PUT",
         headers: getAuthHeaders(),
         body: JSON.stringify(usuarioCompleto) 
     });
     
-    if (!response.ok) throw new Error("Error al cambiar el estado del usuario");
-    return await response.json();
+    const json = await response.json();
+
+    // 🛡️ INTERCEPTOR DE ERRORES DE NEGOCIO (Ej: Tareas pendientes)
+    if (!response.ok) {
+        throw new Error(json.message || "Error al cambiar el estado del usuario");
+    }
+    
+    return json;
 }
 
 export async function crearUsuario(datosNuevos) {

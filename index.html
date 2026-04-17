@@ -52,7 +52,7 @@
     </section>
   </div>
 
-<section id="view-admin-users" class="view-section hidden">
+  <section id="view-admin-users" class="view-section hidden">
       <div class="admin-header">
         <div class="admin-header-titles">
           <h2 class="dashboard-title mb-0">Gestión de Usuarios</h2>
@@ -61,6 +61,9 @@
         <div class="admin-header-actions">
           <button class="btn btn--primary shadow-glow" onclick="crearUsuarioUI()">
             <span>➕</span> Nuevo Usuario
+          </button>
+          <button id="btnIrAGestionTareas" class="btn btn--secondary">
+            📋 Gestionar Tareas
           </button>
           <button id="btnVolverProfesor" class="btn btn--outline">
             <span>←</span> Volver al Dashboard
@@ -81,12 +84,44 @@
             </tr>
           </thead>
           <tbody id="tbodyUsuariosAdmin">
-            </tbody>
+          </tbody>
         </table>
       </div>
-    </section>
+  </section>
+
+  <section id="view-admin-tareas" class="view-section hidden">
+    <div class="admin-header">
+      <div class="admin-header-titles">
+        <h2 class="dashboard-title mb-0">Gestión Global de Tareas</h2>
+        <p style="color: var(--text-muted); margin-top: 5px;">Panel central para borrado masivo de tareas.</p>
+      </div>
+      <div class="admin-header-actions">
+        <button id="btnBorrarSeleccionadasGlobal" class="btn btn--danger hidden shadow-glow">
+          🗑️ Eliminar Seleccionadas (<span id="contadorBorradoGlobal">0</span>)
+        </button>
+        <button id="btnVolverUsuariosDesdeTareas" class="btn btn--outline">
+          <span>←</span> Volver a Usuarios
+        </button>
+      </div>
+    </div>
+    
+    <div class="admin-table-wrapper">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th style="width: 40px;"><input type="checkbox" id="cb-todos-global"></th>
+            <th>ID</th>
+            <th>Título</th>
+            <th>Estudiante (ID)</th>
+            <th>Estado</th>
+            <th style="text-align: center;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyTareasGlobal"></tbody>
+      </table>
+    </div>
+  </section>
 
   <script type="module" src="src/script.js"></script>
 </body>
-
 </html>
