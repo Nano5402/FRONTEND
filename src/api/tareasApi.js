@@ -1,5 +1,5 @@
 ﻿import { API_URL } from '../config/constants.js';
-import { getAuthHeaders } from './usuariosApi.js';
+import { senaFetch } from './apiClient.js'; // 🔥 Importamos el interceptor
 
 function adaptarTarea(tarea) {
     const idNumerico = tarea.userId ? Number(tarea.userId) : null;
@@ -11,9 +11,8 @@ function adaptarTarea(tarea) {
 }
 
 export async function fetchTareasPorUsuario(userId) {
-    const response = await fetch(`${API_URL}/users/${userId}/tasks`, { 
+    const response = await senaFetch(`${API_URL}/users/${userId}/tasks`, { 
         method: "GET",
-        headers: getAuthHeaders(),
         cache: "no-store" 
     });
     if (!response.ok) throw new Error("Error al obtener tareas del usuario");
@@ -24,9 +23,8 @@ export async function fetchTareasPorUsuario(userId) {
 }
 
 export async function fetchTodasLasTareas() {
-    const response = await fetch(`${API_URL}/tasks`, { 
+    const response = await senaFetch(`${API_URL}/tasks`, { 
         method: "GET",
-        headers: getAuthHeaders(),
         cache: "no-store" 
     });
     if (!response.ok) throw new Error("Error al obtener todas las tareas");
@@ -37,34 +35,30 @@ export async function fetchTodasLasTareas() {
 }
 
 export async function crearTareaMultiple(title, body, userIds) {
-    const response = await fetch(`${API_URL}/tasks`, {
+    const response = await senaFetch(`${API_URL}/tasks`, {
         method: "POST",
-        headers: getAuthHeaders(),
         body: JSON.stringify({ title, description: body, userIds }) 
     });
     return await response.json();
 }
 
 export async function eliminarTarea(taskId) {
-    const response = await fetch(`${API_URL}/tasks/${taskId}`, { 
-        method: "DELETE", 
-        headers: getAuthHeaders() 
+    const response = await senaFetch(`${API_URL}/tasks/${taskId}`, { 
+        method: "DELETE"
     });
     return response.ok;
 }
 
 export async function actualizarTarea(taskId, campos) {
     if (campos.status && Object.keys(campos).length === 1) {
-        const response = await fetch(`${API_URL}/tasks/${taskId}/status`, {
+        const response = await senaFetch(`${API_URL}/tasks/${taskId}/status`, {
             method: "PATCH",
-            headers: getAuthHeaders(),
             body: JSON.stringify({ status: campos.status })
         });
         return await response.json();
     } else {
-        const response = await fetch(`${API_URL}/tasks/${taskId}`, {
+        const response = await senaFetch(`${API_URL}/tasks/${taskId}`, {
             method: "PUT",
-            headers: getAuthHeaders(),
             body: JSON.stringify(campos)
         });
         return await response.json();

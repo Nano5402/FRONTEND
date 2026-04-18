@@ -1,17 +1,10 @@
 ﻿import { API_URL } from '../config/constants.js';
 import { storage } from '../utils/storage.js';
-
-export function getAuthHeaders() {
-    // Usamos el gestor en lugar del localStorage crudo
-    const token = storage.getAccessToken();
-    return {
-        "Content-Type": "application/json",
-        "Authorization": token ? `Bearer ${token}` : ""
-    };
-}
+import { senaFetch } from './apiClient.js'; // 🔥 Importamos el interceptor
 
 export async function loginConBackend(documento, password) {
     try {
+        // Usamos fetch nativo aquí porque el login es una ruta pública (no lleva token)
         const response = await fetch(`${API_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -24,14 +17,12 @@ export async function loginConBackend(documento, password) {
             throw new Error(json.msn || "Error al iniciar sesión");
         }
 
-        // 🔥 Guardamos AMBOS tokens usando nuestra utilidad
+        // Guardamos AMBOS tokens usando nuestra utilidad
         const { accessToken, refreshToken, token } = json.data || json;
         
-        // Si el backend manda los tokens con la nueva estructura
         if (accessToken && refreshToken) {
             storage.setTokens(accessToken, refreshToken);
         } else if (token) {
-            // Fallback por si acaso
             storage.setTokens(token, null);
         }
 
@@ -43,9 +34,8 @@ export async function loginConBackend(documento, password) {
 }
 
 export async function fetchTodosLosUsuarios() {
-    const response = await fetch(`${API_URL}/users`, {
+    const response = await senaFetch(`${API_URL}/users`, {
         method: "GET",
-        headers: getAuthHeaders(),
         cache: "no-store" 
     });
     if (!response.ok) throw new Error("Error al obtener usuarios");
@@ -55,9 +45,8 @@ export async function fetchTodosLosUsuarios() {
 }
 
 export async function fetchUsuarioPorId(userId) {
-    const response = await fetch(`${API_URL}/users/${userId}`, {
+    const response = await senaFetch(`${API_URL}/users/${userId}`, {
         method: "GET",
-        headers: getAuthHeaders(),
         cache: "no-store"
     });
     if (!response.ok) throw new Error("Error al buscar el usuario");
@@ -67,9 +56,8 @@ export async function fetchUsuarioPorId(userId) {
 }
 
 export async function actualizarUsuario(userId, datosNuevos) {
-    const response = await fetch(`${API_URL}/users/${userId}`, {
+    const response = await senaFetch(`${API_URL}/users/${userId}`, {
         method: "PUT",
-        headers: getAuthHeaders(),
         body: JSON.stringify(datosNuevos)
     });
     
@@ -78,10 +66,8 @@ export async function actualizarUsuario(userId, datosNuevos) {
 }
 
 export async function cambiarEstadoUsuario(userId, nuevoEstado) {
-    // Usamos PATCH, que es la ruta correcta del backend actual
-    const response = await fetch(`${API_URL}/users/${userId}/status`, {
+    const response = await senaFetch(`${API_URL}/users/${userId}/status`, {
         method: "PATCH",
-        headers: getAuthHeaders(),
         body: JSON.stringify({ status: nuevoEstado }) 
     });
     
@@ -95,9 +81,8 @@ export async function cambiarEstadoUsuario(userId, nuevoEstado) {
 }
 
 export async function crearUsuario(datosNuevos) {
-    const response = await fetch(`${API_URL}/users`, {
+    const response = await senaFetch(`${API_URL}/users`, {
         method: "POST",
-        headers: getAuthHeaders(),
         body: JSON.stringify(datosNuevos)
     });
     

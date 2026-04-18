@@ -73,7 +73,12 @@ export function createUserCard(usuario, tareas, tareasAMostrar, estadoFiltro, cr
                     btn.onclick = () => onToggle(tarea.id, 'en progreso');
                     actions.appendChild(btn);
                 } else if (tarea.status === 'en progreso') {
-                    actions.innerHTML = '<div class="status-notice info">Estás trabajando aquí 🏃‍♂️</div>';
+                    // Botón para finalizar si está en progreso (mejora para el estudiante)
+                    const btn = document.createElement('button');
+                    btn.className = `btn btn--secondary btn--full`;
+                    btn.innerHTML = '✅ Marcar como Completada';
+                    btn.onclick = () => onToggle(tarea.id, 'completada');
+                    actions.appendChild(btn);
                 } else {
                     actions.innerHTML = '<div class="status-notice success">Tarea finalizada 🎉</div>';
                 }
@@ -127,7 +132,6 @@ export function createProfessorDashboard(profesor, estudiantes, tareasGlobales, 
         </div>
     `;
 
-    // 🔥 CONECTADO A LA FUNCIÓN GLOBAL
     container.querySelector('#btnGestionarTareasGlobales').onclick = () => {
         if(window.abrirPanelGestorTareas) window.abrirPanelGestorTareas('dashboard');
     };
@@ -157,6 +161,8 @@ export function createProfessorDashboard(profesor, estudiantes, tareasGlobales, 
             const item = document.createElement('div');
             item.className = 'task-item card';
             item.style.display = 'flex';
+            
+            // 🔥 AHORA INYECTAMOS EL SELECTOR DE ESTADO
             item.innerHTML = `
                 <input type="checkbox" class="cb-eliminar-masivo" value="${tarea.id}" style="margin-right: 15px;">
                 <div style="flex-grow: 1;">
@@ -164,12 +170,25 @@ export function createProfessorDashboard(profesor, estudiantes, tareasGlobales, 
                         <h4 class="task-title">${tarea.title}</h4>
                         ${getStatusBadge(tarea.status)}
                     </div>
-                    <div class="secondary-actions" style="margin-top: 10px;">
-                        <button class="btn btn--warning btn--sm btn-edit">✏️</button>
-                        <button class="btn btn--danger btn--sm btn-delete">🗑️</button>
+                    
+                    <div class="secondary-actions" style="margin-top: 15px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <div style="display: flex; gap: 5px; align-items: center; background: #f1f5f9; padding: 4px 8px; border-radius: 6px;">
+                            <span style="font-size: 0.8rem; color: #64748b; font-weight: 600;">Estado:</span>
+                            <select class="form__select select-estado-profesor" style="padding: 2px 5px; font-size: 0.85rem; height: auto; border: none; background: transparent; cursor: pointer;">
+                                <option value="pendiente" ${tarea.status === 'pendiente' ? 'selected' : ''}>Pendiente</option>
+                                <option value="en progreso" ${tarea.status === 'en progreso' ? 'selected' : ''}>En Progreso</option>
+                                <option value="completada" ${tarea.status === 'completada' ? 'selected' : ''}>Completada</option>
+                            </select>
+                        </div>
+                        <button class="btn btn--warning btn--sm btn-edit">✏️ Editar</button>
+                        <button class="btn btn--danger btn--sm btn-delete">🗑️ Eliminar</button>
                     </div>
                 </div>
             `;
+            
+            // Evento para cambiar estado directamente desde el Select
+            item.querySelector('.select-estado-profesor').onchange = (e) => onToggle(tarea.id, e.target.value);
+            
             item.querySelector('.btn-edit').onclick = () => onEditar(tarea);
             item.querySelector('.btn-delete').onclick = () => onEliminar(tarea.id);
             contenedorTareas.appendChild(item);
