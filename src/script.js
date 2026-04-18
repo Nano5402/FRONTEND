@@ -34,6 +34,7 @@ const btnCerrarSesion = document.getElementById('btnCerrarSesion');
 const loginTitle = document.getElementById('loginTitle');
 const loginForm = document.getElementById('loginForm');
 const documentoInput = document.getElementById('documentoInput');
+const passwordInput = document.getElementById('passwordInput');
 const loginError = document.getElementById('loginError');
 const resultadoUsuario = document.getElementById('resultadoUsuario');
 const headerSubtitle = document.getElementById('headerSubtitle');
@@ -70,14 +71,18 @@ loginForm?.addEventListener('submit', async (e) => {
     clearError(loginError);
 
     const docValue = documentoInput.value.trim();
-    if (!isValidInput(docValue)) {
-        showError(loginError, 'El documento es obligatorio.');
+    const passValue = passwordInput?.value.trim(); // Capturamos la contraseña
+
+    // Validación estricta en el frontend
+    if (!isValidInput(docValue) || !passValue) {
+        showError(loginError, 'El documento y la contraseña son obligatorios.');
         return;
     }
 
     try {
-        const usuario = await loginConBackend(docValue);
-
+        // Le pasamos AMBOS datos a la API
+        const usuario = await loginConBackend(docValue, passValue);
+        
         if (usuario) {
             if (usuario.role !== currentSelectedRole) {
                 showError(loginError, `Este documento no pertenece a un ${currentSelectedRole === 'admin' ? 'Profesor' : 'Estudiante'}.`);
@@ -113,6 +118,7 @@ btnCerrarSesion?.addEventListener('click', () => {
     viewRoles?.classList.remove('hidden');
     if(resultadoUsuario) resultadoUsuario.innerHTML = '';
     if(documentoInput) documentoInput.value = '';
+    if(passwordInput) passwordInput.value = '';
     if(headerSubtitle) headerSubtitle.textContent = 'Selecciona tu perfil de ingreso';
     usuarioActual = null;
     showSuccessToast('Sesión cerrada correctamente');

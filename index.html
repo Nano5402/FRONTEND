@@ -36,8 +36,16 @@
           <div class="form__group">
             <label for="documentoInput" class="form__label">Documento de identidad</label>
             <input type="text" id="documentoInput" class="form__input" placeholder="Ingresa tu documento">
-            <span class="form__error" id="loginError"></span>
           </div>
+          <div class="form__group" style="margin-top: 15px;">
+            <label for="passwordInput" class="form__label">Contraseña</label>
+            <input type="password" id="passwordInput" class="form__input" placeholder="Ingresa tu contraseña">
+          </div>
+          
+          <div style="min-height: 20px; margin-bottom: 10px; text-align: center;">
+             <span class="form__error" id="loginError" style="display: block;"></span>
+          </div>
+          
           <button type="submit" class="btn btn--primary btn--full" id="btnSubmitLogin">Entrar</button>
         </form>
       </div>

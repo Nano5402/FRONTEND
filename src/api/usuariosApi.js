@@ -8,19 +8,22 @@ export function getAuthHeaders() {
     };
 }
 
-export async function loginConBackend(documento) {
+export async function loginConBackend(documento, password) {
     try {
         const response = await fetch(`${API_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ document: documento }) // En la Issue #1 le agregaremos el password
+            // Enviamos el objeto exacto que Zod está esperando
+            body: JSON.stringify({ document: documento, password: password }) 
         });
 
         const json = await response.json();
         
-        if (!response.ok) return null;
+        if (!response.ok) {
+            // 🔥 Mejora: Mostrar el mensaje de error real del backend (ej: "Credenciales inválidas")
+            throw new Error(json.msn || "Error al iniciar sesión");
+        }
 
-        // Atrapamos el token de la nueva estructura del backend
         const token = json.data?.accessToken || json.data?.token || json.token;
         if (token) {
             localStorage.setItem('sena_token', token);
@@ -29,6 +32,8 @@ export async function loginConBackend(documento) {
         return json.data.user; 
     } catch (error) {
         console.error("Error en login:", error);
+        // Si quieres que script.js muestre el mensaje exacto del backend, en lugar de null, lánzalo.
+        // Pero para mantener tu lógica actual:
         return null;
     }
 }
