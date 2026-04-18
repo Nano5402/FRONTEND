@@ -5,6 +5,7 @@ import { ordenarTareas, filtrarTareasPorEstado, procesarActualizacion, procesarD
 import { createUserCard, createErrorCard, createProfessorDashboard } from './ui/tareasView.js';
 import { prepararExportacion, crearTareaMultiple, eliminarTarea, actualizarTarea, loginConBackend, fetchTodosLosUsuarios, actualizarUsuario, cambiarEstadoUsuario, crearUsuario, fetchTodasLasTareas, fetchTareasPorUsuario, eliminarMultiplesTareas } from './api/index.js';
 import { descargarJSON } from './ui/exportUI.js';
+import { storage } from './utils/storage.js';
 
 // ============================================================
 // VARIABLES DE ESTADO GLOBAL
@@ -112,7 +113,7 @@ loginForm?.addEventListener('submit', async (e) => {
 });
 
 btnCerrarSesion?.addEventListener('click', () => {
-    localStorage.removeItem('sena_token');
+    storage.clearTokens();
     mainHeader?.classList.remove('hidden');
     viewDashboard?.classList.add('hidden');
     viewRoles?.classList.remove('hidden');
@@ -340,12 +341,14 @@ const tbodyUsuariosAdmin = document.getElementById('tbodyUsuariosAdmin');
 
 if (btnVolverProfesor) {
     btnVolverProfesor.addEventListener('click', () => {
+        localStorage.setItem('sena_current_view', 'view-dashboard');
         viewAdminUsers?.classList.add('hidden');
         viewDashboard?.classList.remove('hidden');
     });
 }
 
 window.abrirPanelUsuarios = async function() {
+    localStorage.setItem('sena_current_view', 'view-admin-users');
     viewDashboard?.classList.add('hidden');
     viewAdminUsers?.classList.remove('hidden');
     if(tbodyUsuariosAdmin) tbodyUsuariosAdmin.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px;">Cargando usuarios...</td></tr>';
@@ -495,6 +498,8 @@ window.crearUsuarioUI = async function() {
 
 // 🔥 Función global inteligente
 window.abrirPanelGestorTareas = async function(origen = 'dashboard') {
+    localStorage.setItem('sena_current_view', 'view-admin-tareas');
+    localStorage.setItem('sena_origen_tareas', origen);
     origenGestorTareas = origen; 
     viewDashboard?.classList.add('hidden');
     viewAdminUsers?.classList.add('hidden');
@@ -550,6 +555,7 @@ if (btnIrAGestionTareas) {
 
 // Botón de Volver (Inteligente)
 document.getElementById('btnVolverUsuariosDesdeTareas')?.addEventListener('click', () => {
+    localStorage.setItem('sena_current_view', 'view-dashboard');
     viewAdminTareas?.classList.add('hidden');
     if (origenGestorTareas === 'usuarios') {
         viewAdminUsers?.classList.remove('hidden');
@@ -596,11 +602,15 @@ window.borrarUnaTareaGlobal = async function(id) {
 };
 
 // ============================================================
-// PERSISTENCIA F5 (Auto-Login Seguro)
+// PERSISTENCIA F5 (Auto-Login Seguro y Memoria de Vista)
 // ============================================================
 document.addEventListener('DOMContentLoaded', async () => {
-    const token = localStorage.getItem('sena_token');
-    if (!token || token.split('.').length !== 3) return;
+    const token = storage.getAccessToken(); // Usamos el gestor
+    
+    if (!token || token.split('.').length !== 3) {
+        viewRoles?.classList.remove('hidden'); // Si no hay token, aseguramos que se vea el inicio
+        return;
+    }
 
     try {
         const payload = JSON.parse(decodeURIComponent(escape(atob(token.split('.')[1]))));
@@ -611,9 +621,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             role: payload.role
         };
 
+        // 1. Ocultamos las vistas de inicio
         viewRoles?.classList.add('hidden');
+        viewLogin?.classList.add('hidden');
         mainHeader?.classList.add('hidden');
         
+        // 2. Cargamos la data del usuario
         if (usuarioActual.role === 'admin') {
             await renderizarVistaProfesor(usuarioActual);
         } else {
@@ -621,8 +634,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         
         btnCerrarSesion?.classList.remove('hidden');
+
+        // 🔥 3. MAGIA UX: Restaurar la última vista donde estaba el usuario
+        const ultimaVista = localStorage.getItem('sena_current_view') || 'view-dashboard';
+        
+        // Ocultamos todas por seguridad
+        viewDashboard?.classList.add('hidden');
+        viewAdminUsers?.classList.add('hidden');
+        viewAdminTareas?.classList.add('hidden');
+
+        // Mostramos solo en la que estaba
+        if (ultimaVista === 'view-admin-users' && usuarioActual.role === 'admin') {
+            abrirPanelUsuarios(); // Esto ya muestra la vista y carga la tabla
+        } else if (ultimaVista === 'view-admin-tareas' && usuarioActual.role === 'admin') {
+            const origen = localStorage.getItem('sena_origen_tareas') || 'dashboard';
+            abrirPanelGestorTareas(origen);
+        } else {
+            viewDashboard?.classList.remove('hidden');
+        }
+
     } catch (e) { 
         console.warn("Sesión inválida, limpiando caché...");
-        localStorage.removeItem('sena_token'); 
+        storage.clearTokens(); 
+        viewRoles?.classList.remove('hidden');
     }
 });
