@@ -1,7 +1,9 @@
 ﻿import { API_URL } from '../config/constants.js';
+import { storage } from '../utils/storage.js';
 
 export function getAuthHeaders() {
-    const token = localStorage.getItem('sena_token');
+    // Usamos el gestor en lugar del localStorage crudo
+    const token = storage.getAccessToken();
     return {
         "Content-Type": "application/json",
         "Authorization": token ? `Bearer ${token}` : ""
@@ -13,27 +15,29 @@ export async function loginConBackend(documento, password) {
         const response = await fetch(`${API_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            // Enviamos el objeto exacto que Zod está esperando
             body: JSON.stringify({ document: documento, password: password }) 
         });
 
         const json = await response.json();
         
         if (!response.ok) {
-            // 🔥 Mejora: Mostrar el mensaje de error real del backend (ej: "Credenciales inválidas")
             throw new Error(json.msn || "Error al iniciar sesión");
         }
 
-        const token = json.data?.accessToken || json.data?.token || json.token;
-        if (token) {
-            localStorage.setItem('sena_token', token);
+        // 🔥 Guardamos AMBOS tokens usando nuestra utilidad
+        const { accessToken, refreshToken, token } = json.data || json;
+        
+        // Si el backend manda los tokens con la nueva estructura
+        if (accessToken && refreshToken) {
+            storage.setTokens(accessToken, refreshToken);
+        } else if (token) {
+            // Fallback por si acaso
+            storage.setTokens(token, null);
         }
 
         return json.data.user; 
     } catch (error) {
         console.error("Error en login:", error);
-        // Si quieres que script.js muestre el mensaje exacto del backend, en lugar de null, lánzalo.
-        // Pero para mantener tu lógica actual:
         return null;
     }
 }
