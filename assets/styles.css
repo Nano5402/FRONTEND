@@ -377,3 +377,136 @@ div:where(.swal2-container) div:where(.swal2-popup) { border-radius: var(--radiu
 .swal-admin-form .swal2-input:focus, .swal-admin-form .swal2-select:focus, .swal-admin-form .swal2-textarea:focus { 
     border-color: var(--sena-green-hover) !important; outline: none !important; box-shadow: 0 0 0 4px rgba(165, 214, 167, 0.2) !important;
 }
+
+/* ====================================
+   10. PREMIUM LAYOUT (App Shell)
+   ==================================== */
+.app-layout {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    background-color: var(--bg-app);
+}
+
+/* Sidebar Navigation */
+.app-sidebar {
+    width: 260px;
+    background-color: var(--bg-surface);
+    border-right: 1px solid var(--border-subtle);
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    transition: all 0.3s var(--ease-smooth);
+}
+
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-bottom: 40px;
+    padding: 0 10px;
+}
+
+.sidebar-brand i {
+    color: var(--brand-primary);
+    font-size: 1.8rem;
+}
+
+.nav-menu {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 15px;
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.nav-item:hover {
+    background-color: rgba(139, 92, 246, 0.1);
+    color: var(--brand-primary);
+}
+
+.nav-item.active {
+    background-color: var(--brand-primary);
+    color: #ffffff;
+    box-shadow: 0 4px 6px rgba(139, 92, 246, 0.25);
+}
+
+.nav-item i {
+    font-size: 1.2rem;
+}
+
+/* Main Content Area */
+.app-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Topbar */
+.app-topbar {
+    height: 70px;
+    background-color: var(--bg-surface);
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 30px;
+}
+
+.topbar-user {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--brand-primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-name {
+    font-weight: 600;
+    color: var(--text-main);
+    font-size: 0.9rem;
+}
+
+.user-role {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.app-content {
+    flex: 1;
+    padding: 30px;
+    overflow-y: auto;
+}
