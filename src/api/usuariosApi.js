@@ -89,3 +89,21 @@ export async function crearUsuario(datosNuevos) {
     if (!response.ok) throw new Error("Error al crear usuario");
     return await response.json();
 }
+
+export async function registrarUsuario(datosPersonales) {
+    try {
+        const response = await fetch(`${API_URL}/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(datosPersonales)
+        });
+
+        const json = await response.json();
+        if (!response.ok) throw new Error(json.message || json.msn || "Error al registrarse");
+        
+        return json;
+    } catch (error) {
+        console.error("Error en registro:", error);
+        throw error;
+    }
+}

@@ -4,32 +4,31 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
-    /* VERDADEROS TONOS PASTEL SENA */
-    --sena-green-pastel: #A5D6A7; 
-    --sena-green-hover: #81C784;
-    --sena-green-text: #1B5E20;   
+    /* V2 Premium Theme - Paleta Oscura y Púrpura */
+    --brand-primary: #8b5cf6; /* Púrpura profesional */
+    --brand-hover: #7c3aed;
+    --brand-text: #ddd6fe;
+
+    --brand-secondary: #3b82f6; /* Azul de acento */
+    --brand-secondary-hover: #2563eb;
     
-    --sena-orange-pastel: #FFCC80; 
-    --sena-orange-hover: #FFB74D;
-    --sena-orange-text: #E65100;  
-    
-    /* Lienzo Corporativo Limpio */
-    --bg-app: #f9fafb;        
-    --bg-surface: #ffffff;    
-    --text-main: #374151;     
+    /* Lienzo Corporativo Dark Mode */
+    --bg-app: #111827;        
+    --bg-surface: #1f2937;    
+    --text-main: #f9fafb;     
     --text-muted: #9ca3af;    
-    --border-subtle: #e5e7eb;  
+    --border-subtle: #374151;  
 
-    /* Alertas y Estados (Tonos Pastel puros) */
-    --success: #059669; --success-bg: #d1fae5;
-    --warning: #d97706; --warning-bg: #fef3c7;
-    --danger: #dc2626;  --danger-bg: #fee2e2;
-    --info: #2563eb;    --info-bg: #dbeafe;
+    /* Alertas y Estados */
+    --success: #10b981; --success-bg: rgba(16, 185, 129, 0.1);
+    --warning: #f59e0b; --warning-bg: rgba(245, 158, 11, 0.1);
+    --danger: #ef4444;  --danger-bg: rgba(239, 68, 68, 0.1);
+    --info: #3b82f6;    --info-bg: rgba(59, 130, 246, 0.1);
 
-    /* Sombras de Profundidad */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+    /* Sombras y Radios Minimalistas */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
     
     --radius-lg: 16px; 
     --radius-md: 12px; 
