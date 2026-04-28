@@ -1,11 +1,13 @@
-import { loginConBackend, registrarUsuario } from '../../api/usuariosApi.js';
-import { showSuccessToast, showErrorToast } from '../components/notificaciones.js';
+import { loginConBackend, registrarUsuario, solicitarRecuperacion, verificarOTP, resetPassword } from '../../api/usuariosApi.js';
+import { showSuccessToast, showErrorToast, showInfoToast } from '../components/notificaciones.js';
 import { isValidInput, showError, clearError } from '../../utils/domHelpers.js';
 
 export class AuthView {
     constructor(containerId, onLoginSuccess) {
         this.container = document.getElementById(containerId);
-        this.onLoginSuccess = onLoginSuccess; // Callback para avisarle al main.js que ya entramos
+        this.onLoginSuccess = onLoginSuccess;
+        this.tempEmail = ''; // Almacena el correo durante el flujo
+        this.tempOTP = '';   // Almacena el código validado
     }
 
     renderLogin() {
@@ -162,6 +164,140 @@ export class AuthView {
             } catch (error) {
                 showError(errEl, error.message || 'Error al registrar el usuario.');
             }
+        });
+  }
+  
+  renderForgotPassword() {
+        this.container.innerHTML = `
+            <div class="card" style="max-width: 400px; margin: 40px auto; animation: slideUpFade 0.4s var(--ease-smooth);">
+                <div style="text-align: center; margin-bottom: 25px;">
+                    <h2 class="card__title" style="font-size: 1.6rem; margin-bottom: 5px;">Recuperar Cuenta</h2>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Enviaremos un código OTP a tu correo</p>
+                </div>
+                <form id="forgotForm" class="form">
+                    <div class="form__group">
+                        <label class="form__label">Correo Electrónico</label>
+                        <input type="email" id="forgotEmail" class="form__input" placeholder="tu-correo@sena.edu.co">
+                    </div>
+                    <div style="min-height: 20px; text-align: center;">
+                        <span id="forgotError" style="color: var(--danger); font-size: 0.85rem;"></span>
+                    </div>
+                    <button type="submit" class="btn btn--primary btn--full">Enviar Código</button>
+                </form>
+                <button id="btnBackLogin" class="btn btn--outline btn--full" style="margin-top: 15px; border:none;">Volver al Login</button>
+            </div>
+        `;
+        document.getElementById('btnBackLogin').onclick = () => this.renderLogin();
+        document.getElementById('forgotForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('forgotEmail').value.trim();
+            if(!email) return showError(document.getElementById('forgotError'), "Ingresa tu correo");
+            
+            try {
+                showInfoToast("Enviando código...");
+                await solicitarRecuperacion(email);
+                this.tempEmail = email;
+                showSuccessToast("Código enviado a Mailtrap");
+                this.renderVerifyOTP();
+            } catch (err) { showError(document.getElementById('forgotError'), err.message); }
+        };
+    }
+
+    renderVerifyOTP() {
+        this.container.innerHTML = `
+            <div class="card" style="max-width: 400px; margin: 40px auto; animation: slideUpFade 0.4s var(--ease-smooth);">
+                <div style="text-align: center; margin-bottom: 25px;">
+                    <h2 class="card__title" style="font-size: 1.6rem; margin-bottom: 5px;">Verificar Código</h2>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Ingresa el código enviado a <b>${this.tempEmail}</b></p>
+                </div>
+                <form id="otpForm" class="form">
+                    <div class="form__group">
+                        <label class="form__label">Código OTP (6 dígitos)</label>
+                        <input type="text" id="otpInput" class="form__input" maxlength="6" style="text-align: center; font-size: 1.5rem; letter-spacing: 5px;">
+                    </div>
+                    <div style="min-height: 20px; text-align: center;">
+                        <span id="otpError" style="color: var(--danger); font-size: 0.85rem;"></span>
+                    </div>
+                    <button type="submit" class="btn btn--primary btn--full">Verificar</button>
+                </form>
+            </div>
+        `;
+        document.getElementById('otpForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const otp = document.getElementById('otpInput').value.trim();
+            try {
+                await verificarOTP(this.tempEmail, otp);
+                this.tempOTP = otp;
+                showSuccessToast("Código válido");
+                this.renderResetPassword();
+            } catch (err) { showError(document.getElementById('otpError'), err.message); }
+        };
+    }
+
+    renderResetPassword() {
+        this.container.innerHTML = `
+            <div class="card" style="max-width: 400px; margin: 40px auto; animation: slideUpFade 0.4s var(--ease-smooth);">
+                <div style="text-align: center; margin-bottom: 25px;">
+                    <h2 class="card__title" style="font-size: 1.6rem; margin-bottom: 5px;">Nueva Contraseña</h2>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Define tu nueva clave de acceso</p>
+                </div>
+                <form id="resetForm" class="form">
+                    <div class="form__group">
+                        <label class="form__label">Contraseña Nueva</label>
+                        <input type="password" id="newPass" class="form__input" placeholder="••••••••">
+                    </div>
+                    <div class="form__group">
+                        <label class="form__label">Confirmar Contraseña</label>
+                        <input type="password" id="confirmNewPass" class="form__input" placeholder="••••••••">
+                    </div>
+                    <div style="min-height: 20px; text-align: center;">
+                        <span id="resetError" style="color: var(--danger); font-size: 0.85rem;"></span>
+                    </div>
+                    <button type="submit" class="btn btn--primary btn--full">Restablecer Contraseña</button>
+                </form>
+            </div>
+        `;
+        document.getElementById('resetForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const pass = document.getElementById('newPass').value.trim();
+            const confirm = document.getElementById('confirmNewPass').value.trim();
+            if(pass !== confirm) return showError(document.getElementById('resetError'), "Las contraseñas no coinciden");
+            
+            try {
+                await resetPassword(this.tempEmail, this.tempOTP, pass);
+                showSuccessToast("Contraseña actualizada con éxito");
+                this.renderLogin();
+            } catch (err) { showError(document.getElementById('resetError'), err.message); }
+        };
+    }
+
+    attachLoginEvents() {
+        // Agregamos el link de "Olvidé mi contraseña" en el login
+        const forgotLink = document.createElement('div');
+        forgotLink.style = "text-align: right; margin-top: -10px; margin-bottom: 15px;";
+        forgotLink.innerHTML = `<button id="btnGoForgot" style="background:none; border:none; color:var(--brand-primary); font-size:0.8rem; cursor:pointer;">¿Olvidaste tu contraseña?</button>`;
+        
+        const form = document.getElementById('loginForm');
+        form.insertBefore(forgotLink, form.querySelector('button[type="submit"]'));
+
+        document.getElementById('btnGoForgot').onclick = () => this.renderForgotPassword();
+        document.getElementById('btnGoToRegister').onclick = () => this.renderRegister();
+        
+        // ... (resto del evento submit de login se mantiene igual) ...
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const errEl = document.getElementById('loginError');
+            clearError(errEl);
+            const doc = document.getElementById('docLogin').value.trim();
+            const pass = document.getElementById('passLogin').value.trim();
+            if (!isValidInput(doc) || !pass) return showError(errEl, 'Documento y contraseña obligatorios.');
+            try {
+                const usuario = await loginConBackend(doc, pass);
+                if (usuario) {
+                    showSuccessToast(`¡Bienvenido!`);
+                    this.onLoginSuccess(usuario);
+                } else { showError(errEl, 'Credenciales inválidas.'); }
+            } catch (error) { showErrorToast('Error de conexión.'); }
         });
     }
 }

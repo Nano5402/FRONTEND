@@ -107,3 +107,45 @@ export async function registrarUsuario(datosPersonales) {
         throw error;
     }
 }
+
+/**
+ * Envía una solicitud para generar un código OTP al correo del usuario.
+ */
+export async function solicitarRecuperacion(email) {
+    const response = await fetch(`${API_URL}/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+    });
+    const json = await response.json();
+    if (!response.ok) throw new Error(json.msn || "No se pudo enviar el correo");
+    return json;
+}
+
+/**
+ * Verifica si el código OTP ingresado es válido y no ha expirado.
+ */
+export async function verificarOTP(email, otp) {
+    const response = await fetch(`${API_URL}/auth/verify-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp })
+    });
+    const json = await response.json();
+    if (!response.ok) throw new Error(json.msn || "Código inválido o expirado");
+    return json;
+}
+
+/**
+ * Establece la nueva contraseña en el sistema.
+ */
+export async function resetPassword(email, otp, newPassword) {
+    const response = await fetch(`${API_URL}/auth/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp, password: newPassword })
+    });
+    const json = await response.json();
+    if (!response.ok) throw new Error(json.msn || "Error al restablecer la contraseña");
+    return json;
+}
