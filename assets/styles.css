@@ -1,35 +1,27 @@
 ﻿/* ============================================================
-   STYLES.CSS - SISTEMA CORPORATIVO SENA (Pastel UI Definitivo)
+   STYLES.CSS - SISTEMA CORPORATIVO SENA (V2 Dark Premium)
    ============================================================ */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
-    /* V2 Premium Theme - Paleta Oscura y Púrpura */
-    --brand-primary: #8b5cf6; /* Púrpura profesional */
+    /* Paleta Oscura y Púrpura (Premium) */
+    --brand-primary: #8b5cf6; 
     --brand-hover: #7c3aed;
-    --brand-text: #ddd6fe;
-
-    --brand-secondary: #3b82f6; /* Azul de acento */
-    --brand-secondary-hover: #2563eb;
+    --brand-faded: rgba(139, 92, 246, 0.1);
     
-    /* Lienzo Corporativo Dark Mode */
-    --bg-app: #111827;        
-    --bg-surface: #1f2937;    
-    --text-main: #f9fafb;     
-    --text-muted: #9ca3af;    
-    --border-subtle: #374151;  
+    --bg-app: #09090b;        /* Negro profundo de fondo */
+    --bg-surface: #18181b;    /* Gris muy oscuro para tarjetas */
+    --text-main: #f9fafb;     /* Blanco puro para textos */
+    --text-muted: #a1a1aa;    /* Gris claro */
+    --border-subtle: #27272a; /* Líneas sutiles */
 
-    /* Alertas y Estados */
+    /* Alertas */
     --success: #10b981; --success-bg: rgba(16, 185, 129, 0.1);
     --warning: #f59e0b; --warning-bg: rgba(245, 158, 11, 0.1);
     --danger: #ef4444;  --danger-bg: rgba(239, 68, 68, 0.1);
-    --info: #3b82f6;    --info-bg: rgba(59, 130, 246, 0.1);
 
-    /* Sombras y Radios Minimalistas */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
-    
+    /* UI Base */
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.6);
     --radius-lg: 16px; 
     --radius-md: 12px; 
     --radius-sm: 8px;
@@ -37,476 +29,176 @@
 }
 
 /* ====================================
-   1. BASE Y TIPOGRAFÍA
+   1. RESET Y ANTI-SCROLL GLOBAL
    ==================================== */
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { 
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden; /* ¡Destruye el scroll global de toda la página! */
     font-family: 'Inter', sans-serif; 
     background-color: var(--bg-app); 
     color: var(--text-main); 
-    line-height: 1.6; 
-    -webkit-font-smoothing: antialiased; 
 }
-button, input, select, textarea { font-family: inherit; outline: none; border: none; }
-.hidden { display: none !important; }
-.mb-0 { margin-bottom: 0 !important; }
 
-.view-section { animation: slideUpFade 0.4s var(--ease-smooth) forwards; }
-@keyframes slideUpFade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+button, input, select, textarea { font-family: inherit; outline: none; border: none; }
+
+/* El contenedor raíz ocupa exactamente la pantalla */
+#app-root {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto; /* Solo permite scroll aquí si estamos en la vista de Login */
+}
+
+/* Animaciones */
+@keyframes slideUpFade { 
+    from { opacity: 0; transform: translateY(10px); } 
+    to { opacity: 1; transform: translateY(0); } 
+}
 
 /* ====================================
-   2. CONTENEDORES Y TARJETAS GLOBALES
+   2. TARJETAS Y CONTENEDORES
    ==================================== */
-.container { max-width: 1100px; margin: 0 auto; padding: 40px 20px; }
-.header { text-align: center; margin-bottom: 50px; }
-.header__title { color: var(--text-main); font-size: 2.5rem; font-weight: 800; letter-spacing: -1.5px; margin-bottom: 10px; }
-.header__subtitle { color: var(--text-muted); font-size: 1.1rem; font-weight: 500; }
-
 .card { 
     background: var(--bg-surface); 
     border-radius: var(--radius-md); 
-    box-shadow: var(--shadow-md); 
     border: 1px solid var(--border-subtle); 
     padding: 30px; 
-    transition: all 0.3s ease; 
+    width: 100%; /* Obliga a la tarjeta a expandirse */
 }
 
 /* ====================================
-   3. BOTONES (SENA Verdadero Pastel)
+   3. BOTONES
    ==================================== */
 .btn { 
     display: inline-flex; align-items: center; justify-content: center; 
     padding: 10px 20px; border-radius: var(--radius-sm); 
-    font-weight: 700; font-size: 0.95rem; cursor: pointer; 
-    transition: all 0.2s var(--ease-smooth); 
-    gap: 8px; border: 1px solid transparent;
+    font-weight: 600; font-size: 0.95rem; cursor: pointer; 
+    transition: all 0.2s var(--ease-smooth); gap: 8px; border: 1px solid transparent;
 }
 .btn:active { transform: scale(0.97); }
 
-.btn--primary { 
-    background: var(--sena-green-pastel); 
-    color: var(--sena-green-text); 
-    box-shadow: 0 2px 4px rgba(165, 214, 167, 0.4); 
+.btn--primary { background: var(--brand-primary); color: #ffffff; }
+.btn--primary:hover { background: var(--brand-hover); box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3); }
+
+.btn--outline { background: transparent; border-color: var(--border-subtle); color: var(--text-main); }
+.btn--outline:hover { border-color: var(--brand-primary); color: var(--brand-primary); }
+
+.btn--full { width: 100%; }
+
+/* Botones de acción en tablas (Pequeños y elegantes) */
+.btn-action {
+    padding: 6px 12px; font-size: 0.8rem; font-weight: 600; border-radius: 6px;
+    display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+    border: 1px solid transparent; transition: all 0.2s;
 }
-.btn--primary:hover { background: var(--sena-green-hover); transform: translateY(-1px); }
-
-.btn--secondary { 
-    background: var(--sena-orange-pastel); 
-    color: var(--sena-orange-text); 
-    box-shadow: 0 2px 4px rgba(255, 204, 128, 0.4);
-}
-.btn--secondary:hover { background: var(--sena-orange-hover); transform: translateY(-1px); }
-
-.btn--outline { 
-    background: transparent; border-color: var(--border-subtle); 
-    color: var(--text-muted); font-weight: 600;
-}
-.btn--outline:hover { border-color: var(--text-main); color: var(--text-main); background: var(--bg-app); }
-
-.btn--danger { background: var(--danger-bg); color: var(--danger); font-weight: 600;}
-.btn--danger:hover { background: #fca5a5; }
-
-.btn--sm { padding: 8px 16px; font-size: 0.85rem; }
+.btn-action--success { background: rgba(16, 185, 129, 0.1); color: #10b981; border-color: rgba(16, 185, 129, 0.2); }
+.btn-action--success:hover { background: #10b981; color: #fff; }
+.btn-action--danger { background: rgba(239, 68, 68, 0.1); color: #ef4444; border-color: rgba(239, 68, 68, 0.2); }
+.btn-action--danger:hover { background: #ef4444; color: #fff; }
 
 /* ====================================
-   4. PANTALLA DE LOGIN (Roles)
+   4. FORMULARIOS (Login)
    ==================================== */
-.login-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; margin-top: 20px; }
-.clickable-card { cursor: pointer; border-top: 4px solid transparent; text-align: center; padding: 40px 20px; }
-.clickable-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-lg); }
-.card--estudiante { border-top-color: var(--sena-orange-pastel); }
-.card--profesor { border-top-color: var(--sena-green-pastel); }
-
 .form { display: flex; flex-direction: column; gap: 20px; }
-.form__group { display: flex; flex-direction: column; gap: 8px; text-align: left;}
-.form__label { font-weight: 600; font-size: 0.9rem; color: var(--text-main); }
+.form__group { display: flex; flex-direction: column; gap: 8px; text-align: left; }
+.form__label { font-weight: 600; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; }
 .form__input { 
-    width: 100%; padding: 12px 16px; 
-    border: 1px solid var(--border-subtle); 
+    width: 100%; padding: 12px 16px; border: 1px solid var(--border-subtle); 
     border-radius: var(--radius-sm); font-size: 1rem; color: var(--text-main);
-    background: var(--bg-surface); transition: all 0.2s; 
+    background: var(--bg-app); transition: all 0.2s; 
 }
-.form__input:focus { border-color: var(--sena-green-hover); box-shadow: 0 0 0 4px rgba(165, 214, 167, 0.2); }
+.form__input:focus { border-color: var(--brand-primary); box-shadow: 0 0 0 3px var(--brand-faded); }
 
 /* ====================================
-   5. BANNERS Y TARJETAS DE SELECCIÓN
+   5. TABLAS DE DATOS GLOBALES
    ==================================== */
-.welcome-banner { 
-    background: linear-gradient(135deg, var(--sena-green-hover) 0%, var(--sena-green-pastel) 100%); 
-    border-radius: var(--radius-lg); padding: 35px 40px; color: var(--sena-green-text); 
-    display: flex; justify-content: space-between; align-items: center; 
-    margin-bottom: 30px; box-shadow: var(--shadow-md); flex-wrap: wrap; gap: 20px;
+.data-table { width: 100%; border-collapse: collapse; text-align: left; }
+.data-table th {
+    background-color: var(--bg-app); color: var(--text-muted); font-weight: 600;
+    padding: 16px; border-bottom: 1px solid var(--border-subtle);
+    font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px;
 }
-.welcome-title { font-size: 2.2rem; font-weight: 800; letter-spacing: -1.5px; margin: 0; }
-.welcome-subtitle { font-size: 1.05rem; opacity: 0.9; margin-top: 5px; font-weight: 500;}
+.data-table td { padding: 16px; border-bottom: 1px solid var(--border-subtle); vertical-align: middle; }
+.data-table tbody tr:hover { background-color: rgba(255,255,255,0.02); }
 
 /* ====================================
-   6. DASHBOARD PROFESOR (Layout Exacto)
-   ==================================== */
-.dashboard-title { font-size: 1.8rem; color: var(--text-main); font-weight: 800; margin-bottom: 25px; letter-spacing: -1px;}
-
-/* ============================================================
-   LA REPARACIÓN DEL ENCABEZADO (Botones a la derecha)
-   ============================================================ */
-.dashboard-header-actions { 
-    display: flex; 
-    flex-direction: column; 
-    justify-content: space-between; 
-    align-items: flex-start;
-    margin-top: 15px;    /* Separación por arriba */
-    margin-bottom: 40px; /* Separación generosa hacia abajo para no pegar con las cajas */
-    gap: 20px;
-}
-
-/* En pantallas de PC, obligamos a que el texto quede a la izquierda y los botones a la derecha */
-@media (min-width: 800px) {
-    .dashboard-header-actions {
-        flex-direction: row; 
-        align-items: center;
-    }
-}
-
-.header-buttons { 
-    display: flex; 
-    gap: 15px; 
-    margin-left: auto; /* Empuja mágicamente los botones a la derecha */
-}
-
-/* Hacemos que los botones no se vean tan aplastados */
-.header-buttons .btn {
-    padding: 10px 20px !important;
-    font-size: 0.95rem;
-}
-
-.dashboard-grid { display: grid; gap: 25px; align-items: start; }
-@media (min-width: 900px) { 
-    .dashboard-grid { grid-template-columns: 320px 1fr; } 
-    .sidebar-card { position: sticky; top: 25px; } 
-}
-
-/* PANEL IZQUIERDO: ESTUDIANTES */
-.sidebar-card { 
-    padding: 0; overflow: hidden; 
-    background: var(--bg-surface);
-    border: 1px solid var(--border-subtle); 
-    border-radius: var(--radius-md); 
-    box-shadow: var(--shadow-sm);
-}
-.section-title { 
-    padding: 18px 20px; margin: 0; 
-    border-bottom: 1px solid var(--border-subtle); 
-    font-size: 0.85rem; font-weight: 700; color: var(--text-muted); 
-    text-transform: uppercase; letter-spacing: 1px; 
-    background: #f9fafb;
-}
-.students-list-wrapper { max-height: calc(100vh - 250px); overflow-y: auto; }
-
-.student-item { 
-    display: flex; justify-content: space-between; align-items: center; 
-    padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); 
-    cursor: pointer; transition: background 0.2s; 
-}
-.student-item:hover { background: #f9fafb; }
-.student-item.active { 
-    background: rgba(165, 214, 167, 0.2); 
-    border-left: 4px solid var(--sena-green-pastel); 
-}
-
-.student-info { 
-    display: flex; 
-    flex-direction: row !important; 
-    align-items: center; 
-    gap: 15px; 
-}
-.student-avatar { 
-    flex-shrink: 0;
-    background: white; color: var(--sena-green-text); 
-    width: 38px; height: 38px; border-radius: 10px; 
-    display: flex; justify-content: center; align-items: center; 
-    font-weight: 700; font-size: 0.95rem; 
-    border: 1px solid var(--border-subtle); box-shadow: var(--shadow-sm);
-}
-.student-name { font-weight: 600; font-size: 0.95rem; color: var(--text-main); text-align: left; }
-
-/* PANEL DERECHO: TAREAS ENMARCADAS */
-.main-panel-card { 
-    padding: 30px; 
-    background: var(--bg-surface); 
-    border: 1px solid var(--border-subtle); 
-    border-radius: var(--radius-lg); 
-    box-shadow: var(--shadow-sm); 
-}
-.main-panel-header { 
-    display: flex; justify-content: space-between; align-items: center; 
-    margin-bottom: 25px; padding-bottom: 20px; 
-    border-bottom: 1px solid var(--border-subtle); 
-}
-
-.header-buttons { 
-    display: flex; gap: 12px; margin-left: auto; 
-}
-
-/* BARRA DE FILTROS HORIZONTAL Y PEQUEÑA */
-.controls-bar { 
-    display: flex; flex-direction: row; align-items: flex-end; gap: 20px; 
-    margin-bottom: 25px; padding: 15px 20px; 
-    background: #f9fafb; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); 
-}
-.control-group { display: flex; flex-direction: column; gap: 6px; flex: 1; }
-.control-group label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;}
-.control-group select, .control-group input { 
-    padding: 8px 12px; font-size: 0.85rem; color: var(--text-main);
-    border: 1px solid #cbd5e1; border-radius: var(--radius-sm); background: white;
-}
-.control-group select:focus, .control-group input:focus { border-color: var(--sena-green-hover); box-shadow: 0 0 0 3px rgba(165, 214, 167, 0.2); }
-
-/* --- TARJETAS DE TAREA (Modo Compacto Pro) --- */
-.tasks-list-container { display: flex; flex-direction: column; gap: 12px; /* Menos hueco entre tareas */ }
-
-.task-item { 
-    display: flex; flex-direction: column; 
-    padding: 16px 20px; /* Reducimos el padding gigante de 25px */
-    background: var(--bg-surface); 
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-sm); /* Bordes ligeramente más cuadrados */
-    transition: all 0.2s var(--ease-smooth);
-}
-.task-item:hover { 
-    transform: translateX(4px); /* En vez de saltar hacia arriba, se deslizan elegante a la derecha */
-    box-shadow: var(--shadow-sm); 
-    border-color: var(--sena-green-pastel); 
-}
-
-.task-item__header { 
-    display: flex; justify-content: space-between; align-items: flex-start; 
-    margin-bottom: 8px; /* Texto más pegadito al título */
-    gap: 15px; 
-}
-.task-title { font-size: 1rem; font-weight: 700; color: var(--text-main); }
-
-.task-body { 
-    color: var(--text-muted); 
-    font-size: 0.85rem; /* Letra de descripción más sutil */
-    margin-bottom: 12px; 
-    line-height: 1.5; 
-    display: -webkit-box;
-    -webkit-line-clamp: 2; /* Truco de UI: Corta el texto si es muy largo con "..." */
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-/* Reducimos el espacio de los botones de abajo */
-.actions-prof-footer { 
-    display: flex; justify-content: flex-end !important; align-items: center; 
-    gap: 8px; /* Botones más pegaditos */
-    margin-top: 12px; 
-    padding-top: 12px; 
-    border-top: 1px solid var(--border-subtle); 
-    width: 100%;
-    flex-wrap: wrap;
-}
-
-/* Hacemos los botones de cada tarea un poquito más pequeños */
-.actions-prof-footer .btn {
-    padding: 6px 14px !important;
-    font-size: 0.8rem !important;
-    min-width: auto !important; /* Quitamos el ancho forzado */
-}
-
-/* Destruimos el ancho 100% de los divs intermediarios de JavaScript */
-.actions-prof-footer > div,
-.main-actions,
-.secondary-actions {
-    display: flex !important;
-    justify-content: flex-end !important;
-    gap: 15px !important;
-    flex: 0 0 auto !important; /* Prohíbe terminantemente que se estiren */
-    width: auto !important;
-    margin: 0 !important;
-}
-
-/* Tamaño de los botones y padding interno */
-.actions-prof-footer .btn,
-.main-actions .btn,
-.secondary-actions .btn { 
-    flex: 0 0 auto !important; 
-    width: auto !important;
-    min-width: 150px !important; 
-    padding: 10px 24px !important; /* Botones un poco más anchos para que se vean pro */
-}
-
-/* ====================================
-   7. BADGES DE ESTADO (Pills Pastel)
-   ==================================== */
-.badge { padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
-.badge--pendiente { background: var(--warning-bg); color: #b45309; }
-.badge--progreso { background: var(--info-bg); color: #1d4ed8; }
-.badge--completada { background: var(--success-bg); color: #065f46; }
-
-/* ====================================
-   8. VISTA ADMIN (Gestión de Usuarios)
-   ==================================== */
-#view-admin-users { max-width: 1000px; margin: 0 auto 60px auto; }
-.admin-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid var(--border-subtle); flex-wrap: wrap; gap: 15px;}
-.admin-header-actions { display: flex; gap: 12px; }
-
-.admin-table-wrapper { background: var(--bg-surface); border-radius: var(--radius-md); border: 1px solid var(--border-subtle); box-shadow: var(--shadow-sm); overflow-x: auto; }
-.admin-table { width: 100%; border-collapse: collapse; text-align: left; }
-.admin-table th { 
-    padding: 16px 20px; font-weight: 600; color: var(--text-muted); 
-    background-color: #f9fafb; border-bottom: 1px solid var(--border-subtle); 
-    text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; 
-}
-.admin-table td { padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); color: var(--text-main); vertical-align: middle; font-size: 0.9rem; font-weight: 500;}
-.admin-table tbody tr:hover { background-color: #f8fafc; }
-
-.admin-table-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
-.admin-table-actions .btn { padding: 6px 12px; font-size: 0.8rem; font-weight: 500; border-radius: 6px; }
-
-/* ====================================
-   9. SWEETALERT (Integración Perfecta Pastel)
-   ==================================== */
-div:where(.swal2-container) div:where(.swal2-popup) { border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: 20px; border: 1px solid rgba(0,0,0,0.05); }
-.swal-admin-form { text-align: left; margin-top: 15px; }
-.swal-admin-form label { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;}
-.swal-admin-form .swal2-input, .swal-admin-form .swal2-select, .swal-admin-form .swal2-textarea { 
-    width: 100% !important; margin: 0 0 20px 0 !important; 
-    border: 1px solid var(--border-subtle) !important; border-radius: var(--radius-sm) !important; 
-    font-size: 0.95rem !important; box-shadow: none !important; transition: all 0.2s;
-}
-.swal-admin-form .swal2-input:focus, .swal-admin-form .swal2-select:focus, .swal-admin-form .swal2-textarea:focus { 
-    border-color: var(--sena-green-hover) !important; outline: none !important; box-shadow: 0 0 0 4px rgba(165, 214, 167, 0.2) !important;
-}
-
-/* ====================================
-   10. PREMIUM LAYOUT (App Shell)
+   6. PREMIUM LAYOUT (DASHBOARD)
    ==================================== */
 .app-layout {
     display: flex;
-    height: 100vh;
-    overflow: hidden;
+    width: 100%;
+    height: 100%; /* Ocupa estrictamente el alto del #app-root */
+    overflow: hidden; /* Corta todo desborde */
     background-color: var(--bg-app);
 }
 
-/* Sidebar Navigation */
+/* --- SIDEBAR PERFECTO --- */
 .app-sidebar {
     width: 260px;
-    background-color: var(--bg-surface);
+    flex-shrink: 0; /* Prohíbe que se encoja */
+    background-color: var(--bg-app);
     border-right: 1px solid var(--border-subtle);
     display: flex;
     flex-direction: column;
-    padding: 20px;
-    transition: all 0.3s var(--ease-smooth);
+    padding: 25px 20px;
+    z-index: 10;
 }
 
-.sidebar-brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 1.2rem;
-    font-weight: 800;
-    color: var(--text-main);
-    margin-bottom: 40px;
-    padding: 0 10px;
-}
-
-.sidebar-brand i {
-    color: var(--brand-primary);
-    font-size: 1.8rem;
-}
-
-.nav-menu {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
+.sidebar-top { display: flex; flex-direction: column; gap: 8px; }
+.sidebar-brand { display: flex; align-items: center; gap: 12px; font-size: 1.3rem; font-weight: 800; margin-bottom: 30px; }
+.sidebar-brand i { color: var(--brand-primary); font-size: 1.8rem; }
+.nav-menu { list-style: none; display: flex; flex-direction: column; gap: 6px; }
 
 .nav-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 15px;
-    border-radius: var(--radius-sm);
-    color: var(--text-muted);
-    font-weight: 600;
-    font-size: 0.95rem;
-    cursor: pointer;
-    transition: all 0.2s;
+    display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: var(--radius-sm);
+    color: var(--text-muted); font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.2s;
+}
+.nav-item:hover { background-color: var(--brand-faded); color: var(--brand-primary); }
+.nav-item.active { background-color: var(--brand-primary); color: #ffffff; }
+
+/* FIX: El botón de cerrar sesión ahora sí se queda abajo visible */
+.sidebar-bottom {
+    margin-top: auto; 
+    border-top: 1px solid var(--border-subtle);
+    padding-top: 15px;
+}
+.nav-logout { color: var(--danger) !important; }
+.nav-logout:hover { background: var(--danger-bg) !important; color: #fca5a5 !important; }
+
+/* --- MAIN CONTENT & TOPBAR --- */
+.app-main { 
+    flex: 1; /* Obliga a usar todo el espacio derecho */
+    display: flex; 
+    flex-direction: column; 
+    min-width: 0; /* Resuelve un bug crítico de flexbox que impedía encogerse/estirarse bien */
 }
 
-.nav-item:hover {
-    background-color: rgba(139, 92, 246, 0.1);
-    color: var(--brand-primary);
-}
-
-.nav-item.active {
-    background-color: var(--brand-primary);
-    color: #ffffff;
-    box-shadow: 0 4px 6px rgba(139, 92, 246, 0.25);
-}
-
-.nav-item i {
-    font-size: 1.2rem;
-}
-
-/* Main Content Area */
-.app-main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-/* Topbar */
 .app-topbar {
-    height: 70px;
-    background-color: var(--bg-surface);
+    height: 75px; flex-shrink: 0; background-color: var(--bg-app);
     border-bottom: 1px solid var(--border-subtle);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 30px;
+    display: flex; align-items: center; justify-content: space-between; padding: 0 40px;
 }
-
-.topbar-user {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
+.topbar-user { display: flex; align-items: center; gap: 15px; }
 .user-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: var(--brand-primary);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
+    width: 40px; height: 40px; border-radius: 50%; background-color: var(--brand-primary); 
+    color: white; display: flex; align-items: center; justify-content: center; font-weight: 700;
 }
+.user-info { display: flex; flex-direction: column; text-align: right; }
+.user-name { font-weight: 600; font-size: 0.9rem; }
+.user-role { font-size: 0.75rem; color: var(--brand-primary); font-weight: 700; text-transform: uppercase; }
 
-.user-info {
-    display: flex;
-    flex-direction: column;
+/* FIX: El área donde cargan las tablas ahora se expande al máximo */
+.app-content { 
+    flex: 1; 
+    padding: 40px; 
+    overflow-y: auto; /* El único scroll de la aplicación vive aquí adentro */
+    background-color: var(--bg-app); 
 }
-
-.user-name {
-    font-weight: 600;
-    color: var(--text-main);
-    font-size: 0.9rem;
-}
-
-.user-role {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.app-content {
-    flex: 1;
-    padding: 30px;
-    overflow-y: auto;
+#main-content-area {
+    width: 100%;
+    max-width: 100%; /* Libertad total de expansión a la derecha */
 }

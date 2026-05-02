@@ -1,5 +1,6 @@
 const ACCESS_KEY = 'sena_access_token';
 const REFRESH_KEY = 'sena_refresh_token';
+const USER_NAME_KEY = 'sena_user_name'; // 🔥 Nueva llave
 
 export const storage = {
     setTokens: (accessToken, refreshToken) => {
@@ -7,18 +8,16 @@ export const storage = {
         if (refreshToken) localStorage.setItem(REFRESH_KEY, refreshToken);
     },
     
-    getAccessToken: () => {
-        return localStorage.getItem(ACCESS_KEY);
-    },
+    setUserName: (name) => localStorage.setItem(USER_NAME_KEY, name),
+    getUserName: () => localStorage.getItem(USER_NAME_KEY),
     
-    getRefreshToken: () => {
-        return localStorage.getItem(REFRESH_KEY);
-    },
+    getAccessToken: () => localStorage.getItem(ACCESS_KEY),
+    getRefreshToken: () => localStorage.getItem(REFRESH_KEY),
     
     clearTokens: () => {
         localStorage.removeItem(ACCESS_KEY);
         localStorage.removeItem(REFRESH_KEY);
-        // Limpiamos el token antiguo por compatibilidad
-        localStorage.removeItem('sena_token');
+        localStorage.removeItem(USER_NAME_KEY);
+        localStorage.removeItem('sena_token'); // Limpieza del token antiguo
     }
 };

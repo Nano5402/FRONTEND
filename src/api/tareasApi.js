@@ -1,5 +1,5 @@
 ﻿import { API_URL } from '../config/constants.js';
-import { senaFetch } from './apiClient.js'; // 🔥 Importamos el interceptor
+import { senaFetch } from './apiClient.js'; 
 
 function adaptarTarea(tarea) {
     const idNumerico = tarea.userId ? Number(tarea.userId) : null;
@@ -10,18 +10,6 @@ function adaptarTarea(tarea) {
     };
 }
 
-export async function fetchTareasPorUsuario(userId) {
-    const response = await senaFetch(`${API_URL}/users/${userId}/tasks`, { 
-        method: "GET",
-        cache: "no-store" 
-    });
-    if (!response.ok) throw new Error("Error al obtener tareas del usuario");
-    
-    const json = await response.json();
-    const data = json.data || json;
-    return Array.isArray(data) ? data.map(adaptarTarea) : [];
-}
-
 export async function fetchTodasLasTareas() {
     const response = await senaFetch(`${API_URL}/tasks`, { 
         method: "GET",
@@ -30,8 +18,25 @@ export async function fetchTodasLasTareas() {
     if (!response.ok) throw new Error("Error al obtener todas las tareas");
     
     const json = await response.json();
-    const data = json.data || json;
-    return Array.isArray(data) ? data.map(adaptarTarea) : [];
+    // 🔥 FIX: Array a prueba de fallos
+    const data = Array.isArray(json) ? json : (json.data || []);
+    return data.map(adaptarTarea);
+}
+
+export async function fetchTareasPorUsuario(userId) {
+    // 🔥 FIX ANTI-404: Como tu backend no tiene la ruta /users/:id/tasks,
+    // llamamos a la ruta principal de tareas y filtramos las de este usuario.
+    const response = await senaFetch(`${API_URL}/tasks`, { 
+        method: "GET",
+        cache: "no-store" 
+    });
+    if (!response.ok) throw new Error("Error al obtener tareas del usuario");
+    
+    const json = await response.json();
+    const data = Array.isArray(json) ? json : (json.data || []);
+    const todasLasTareas = data.map(adaptarTarea);
+    
+    return todasLasTareas.filter(t => String(t.userId) === String(userId));
 }
 
 export async function crearTareaMultiple(title, body, userIds) {

@@ -15,12 +15,12 @@ export async function procesarEliminacion(taskId, userId) {
 export function ordenarTareas(tareas, criterio) {
     const tareasCopia = [...tareas];
     switch (criterio) {
-        case 'az': return tareasCopia.sort((a, b) => a.title.localeCompare(b.title));
-        case 'za': return tareasCopia.sort((a, b) => b.title.localeCompare(a.title));
-        case 'estado': return tareasCopia.sort((a, b) => a.status.localeCompare(b.status));
-        case 'fecha_asc': return tareasCopia.sort((a, b) => a.id - b.id);
+        case 'az':         return tareasCopia.sort((a, b) => a.title.localeCompare(b.title));
+        case 'za':         return tareasCopia.sort((a, b) => b.title.localeCompare(a.title));
+        case 'estado':     return tareasCopia.sort((a, b) => a.status.localeCompare(b.status));
+        case 'fecha_asc':  return tareasCopia.sort((a, b) => a.id - b.id);
         case 'fecha_desc':
-        default: return tareasCopia.sort((a, b) => b.id - a.id);
+        default:           return tareasCopia.sort((a, b) => b.id - a.id);
     }
 }
 
@@ -31,16 +31,17 @@ export function filtrarTareasPorEstado(tareas, estado) {
 
 export async function procesarDashboardProfesor() {
     const todosLosUsuarios = await fetchTodosLosUsuarios();
-    const todasLasTareas = await fetchTodasLasTareas();
-    
-    // 🛡️ SEGURO ANTIFALLOS
+    const todasLasTareas   = await fetchTodasLasTareas();
+
     if (!Array.isArray(todosLosUsuarios)) throw new Error("Los usuarios no cargaron correctamente");
-    if (!Array.isArray(todasLasTareas)) throw new Error("Las tareas no cargaron correctamente");
+    if (!Array.isArray(todasLasTareas))   throw new Error("Las tareas no cargaron correctamente");
 
-    // 🚀 REGLA DE NEGOCIO (RF06): Solo enviamos estudiantes que estén activos
-    const estudiantesActivos = todosLosUsuarios.filter(u => u.role === 'user' && u.status === 'activo');
+    // ✅ FIX: el backend ahora devuelve role='user' (normalizado) para los estudiantes.
+    // Antes filtraba por role_name === 'Estudiante' (mayúscula) y no encontraba nada.
+    const estudiantesActivos = todosLosUsuarios.filter(u =>
+        u.role === 'user' && u.status === 'activo'
+    );
 
-    // 🔥 CORRECCIÓN: Devolvemos exactamente los nombres que script.js está esperando
     return {
         estudiantes: estudiantesActivos,
         tareasGlobales: todasLasTareas
