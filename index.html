@@ -1,92 +1,61 @@
 ﻿<!DOCTYPE html>
 <html lang="es">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema de Gestión de Tareas</title>
-  <link rel="stylesheet" href="assets/styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskApp — SENA</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!--
+    ╔══════════════════════════════════════════════════════════════════════╗
+    ║  PUNTO DE ENTRADA HTML — index.html                                  ║
+    ║                                                                      ║
+    ║  Este es el único archivo HTML de toda la aplicación.               ║
+    ║  Al ser una SPA (Single Page Application), el navegador carga       ║
+    ║  esta página UNA SOLA VEZ y luego todo el contenido se              ║
+    ║  intercambia dinámicamente con JavaScript.                           ║
+    ║                                                                      ║
+    ║  FLUJO GENERAL:                                                      ║
+    ║  index.html → carga main.js → main.js inicia el router →           ║
+    ║  router detecta el hash (#/login, #/dashboard, etc.) →             ║
+    ║  router inyecta la vista correcta dentro de #app-root               ║
+    ╚══════════════════════════════════════════════════════════════════════╝
+    -->
+
+    <!-- Librería de iconos Phosphor (se carga desde CDN, no necesita npm) -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <!-- Estilos globales del proyecto — variables CSS, componentes base -->
+    <link rel="stylesheet" href="assets/styles.css">
 </head>
-
 <body>
-  <div class="container">
-    <header class="header" id="mainHeader">
-      <h1 class="header__title">Gestión de Tareas SENA</h1>
-      <p class="header__subtitle" id="headerSubtitle">Selecciona tu perfil de ingreso</p>
-    </header>
 
-    <section id="view-roles" class="view-section">
-      <div class="login-grid">
-        <div class="card clickable-card card--estudiante" id="btnRolEstudiante">
-          <h2 class="card__title">Soy Estudiante</h2>
-          <p style="text-align:center; color:var(--text-muted);">Consultar mis tareas asignadas</p>
+    <!--
+        #app-root — El contenedor raíz de la SPA.
+
+        El router toma este elemento y le inyecta el HTML de cada vista.
+        Cuando el usuario navega (cambia el hash), el router reemplaza
+        el contenido de este div con la nueva vista.
+
+        Ejemplo:
+          URL: /#/login      → app-root muestra el formulario de login
+          URL: /#/dashboard  → app-root muestra el sidebar + panel
+          URL: /#/register   → app-root muestra el formulario de registro
+
+        El mensaje "Cargando sistema..." solo aparece el primer instante
+        antes de que main.js termine de inicializarse.
+    -->
+    <div id="app-root">
+        <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;color:var(--text-muted);">
+            <p>Cargando sistema...</p>
         </div>
-        <div class="card clickable-card card--profesor" id="btnRolProfesor">
-          <h2 class="card__title">Soy Profesor</h2>
-          <p style="text-align:center; color:var(--text-muted);">Gestión administrativa y asignación</p>
-        </div>
-      </div>
-    </section>
+    </div>
 
-    <section id="view-login" class="view-section hidden">
-      <div class="card" style="max-width: 400px; margin: 0 auto;">
-        <button id="btnVolverRoles" class="btn btn--secondary btn--sm" style="margin-bottom: 15px;">← Volver</button>
-        <h2 class="card__title" id="loginTitle">Ingreso</h2>
-        <form id="loginForm" class="form" novalidate>
-          <div class="form__group">
-            <label for="documentoInput" class="form__label">Documento de identidad</label>
-            <input type="text" id="documentoInput" class="form__input" placeholder="Ingresa tu documento">
-            <span class="form__error" id="loginError"></span>
-          </div>
-          <button type="submit" class="btn btn--primary btn--full" id="btnSubmitLogin">Entrar</button>
-        </form>
-      </div>
-    </section>
-
-    <section id="view-dashboard" class="view-section hidden">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h2 class="dashboard-title mb-0" id="dashboardTitle" style="font-size:1.5rem;">Mi Panel</h2>
-        <button id="btnCerrarSesion" class="btn btn--danger btn--sm">Cerrar Sesión</button>
-      </div>
-      <div id="resultadoUsuario" class="results-container"></div>
-    </section>
-  </div>
-
-<section id="view-admin-users" class="view-section hidden">
-      <div class="admin-header">
-        <div class="admin-header-titles">
-          <h2 class="dashboard-title mb-0">Gestión de Usuarios</h2>
-          <p style="color: var(--text-muted); margin-top: 5px;">Administra accesos, credenciales y altas del sistema.</p>
-        </div>
-        <div class="admin-header-actions">
-          <button class="btn btn--primary shadow-glow" onclick="crearUsuarioUI()">
-            <span>➕</span> Nuevo Usuario
-          </button>
-          <button id="btnVolverProfesor" class="btn btn--outline">
-            <span>←</span> Volver al Dashboard
-          </button>
-        </div>
-      </div>
-      
-      <div class="admin-table-wrapper">
-        <table class="admin-table" id="tablaUsuariosAdmin">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Usuario</th>
-              <th>Contacto</th>
-              <th>Rol</th>
-              <th>Estado</th>
-              <th style="text-align: center;">Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="tbodyUsuariosAdmin">
-            </tbody>
-        </table>
-      </div>
-    </section>
-
-  <script type="module" src="src/script.js"></script>
+    <!--
+        type="module" es obligatorio para usar import/export de ES Modules.
+        Vite procesa este archivo y resuelve todas las importaciones
+        automáticamente al hacer npm run dev o npm run build.
+    -->
+    <script type="module" src="src/main.js"></script>
 </body>
-
 </html>

@@ -1,0 +1,18 @@
+feat(frontend): reestructura completa de carpetas y arquitectura en capas
+
+- Reorganiza src/ en capas: api/, services/, views/, core/, utils/, components/, config/
+- Separa lógica de negocio del acceso a datos: services/ sobre api/
+- Agrega core/router.js con hash-routing, guards y sistema de rutas registrables
+- Agrega core/store.js con estado global reactivo y patron observable
+- Agrega core/eventBus.js con metodos on/off/emit/once para comunicacion entre modulos
+- Agrega api/client.js con senaFetch() y silent refresh automatico de JWT
+- Centraliza tokens en utils/storage.js con claves prefijadas sena_*
+- Centraliza logica RBAC en utils/rbac.js con getDecoded() y hasPermission()
+- Centraliza validaciones en utils/validators.js con RULES y passwordStrengthHTML
+- Centraliza constantes en config/constants.js con API_URL, PERMISSIONS y ROLE_IDS
+- Agrega components/Sidebar.js con menu dinamico por permisos
+- Agrega dashboards por rol: AdminView, InstructorView, AuditorView, StudentView
+- Agrega vistas de auth: Login, Register, ForgotPassword con flujo OTP de 3 pasos
+- Agrega flag requiresReset para forzar cambio de contrasena temporal al primer login
+- Implementa _pickDashboard() en main.js para seleccion de vista por permisos
+- Agrega comentarios JSDoc con cabeceras ASCII en todos los modulos
