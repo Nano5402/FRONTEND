@@ -1,23 +1,61 @@
 ﻿<!DOCTYPE html>
 <html lang="es">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema de Gestión de Tareas - V2 Premium</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskApp — SENA</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
-  <script src="https://unpkg.com/@phosphor-icons/web"></script>
-  <link rel="stylesheet" href="assets/styles.css">
+    <!--
+    ╔══════════════════════════════════════════════════════════════════════╗
+    ║  PUNTO DE ENTRADA HTML — index.html                                  ║
+    ║                                                                      ║
+    ║  Este es el único archivo HTML de toda la aplicación.               ║
+    ║  Al ser una SPA (Single Page Application), el navegador carga       ║
+    ║  esta página UNA SOLA VEZ y luego todo el contenido se              ║
+    ║  intercambia dinámicamente con JavaScript.                           ║
+    ║                                                                      ║
+    ║  FLUJO GENERAL:                                                      ║
+    ║  index.html → carga main.js → main.js inicia el router →           ║
+    ║  router detecta el hash (#/login, #/dashboard, etc.) →             ║
+    ║  router inyecta la vista correcta dentro de #app-root               ║
+    ╚══════════════════════════════════════════════════════════════════════╝
+    -->
+
+    <!-- Librería de iconos Phosphor (se carga desde CDN, no necesita npm) -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <!-- Estilos globales del proyecto — variables CSS, componentes base -->
+    <link rel="stylesheet" href="assets/styles.css">
 </head>
-
 <body>
-  <div id="app-root" class="container">
-    <div style="text-align: center; margin-top: 20vh; color: var(--text-muted);">
-      <p>Cargando sistema...</p>
+
+    <!--
+        #app-root — El contenedor raíz de la SPA.
+
+        El router toma este elemento y le inyecta el HTML de cada vista.
+        Cuando el usuario navega (cambia el hash), el router reemplaza
+        el contenido de este div con la nueva vista.
+
+        Ejemplo:
+          URL: /#/login      → app-root muestra el formulario de login
+          URL: /#/dashboard  → app-root muestra el sidebar + panel
+          URL: /#/register   → app-root muestra el formulario de registro
+
+        El mensaje "Cargando sistema..." solo aparece el primer instante
+        antes de que main.js termine de inicializarse.
+    -->
+    <div id="app-root">
+        <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;color:var(--text-muted);">
+            <p>Cargando sistema...</p>
+        </div>
     </div>
-  </div>
 
-  <script type="module" src="src/main.js"></script>
+    <!--
+        type="module" es obligatorio para usar import/export de ES Modules.
+        Vite procesa este archivo y resuelve todas las importaciones
+        automáticamente al hacer npm run dev o npm run build.
+    -->
+    <script type="module" src="src/main.js"></script>
 </body>
-
 </html>

@@ -1,5 +1,6 @@
 ﻿/* ============================================================
    STYLES.CSS - SISTEMA CORPORATIVO SENA (V2 Dark Premium)
+   ENFOQUE: MOBILE-FIRST
    ============================================================ */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
@@ -36,24 +37,28 @@
 html, body {
     width: 100%;
     height: 100%;
-    overflow: hidden; /* ¡Destruye el scroll global de toda la página! */
+    overflow: hidden; 
     font-family: 'Inter', sans-serif; 
     background-color: var(--bg-app); 
     color: var(--text-main); 
+    -webkit-tap-highlight-color: transparent; /* Quita el destello azul en móviles */
 }
 
 button, input, select, textarea { font-family: inherit; outline: none; border: none; }
 
-/* El contenedor raíz ocupa exactamente la pantalla */
 #app-root {
     width: 100%;
     height: 100%;
     display: flex;
     flex-direction: column;
-    overflow-y: auto; /* Solo permite scroll aquí si estamos en la vista de Login */
+    overflow-y: auto; 
+    
+    /* 🔥 FIX: Estas tres líneas centrarán CUALQUIER elemento que esté suelto dentro (como el card de login) */
+    align-items: center; 
+    justify-content: center;
+    position: relative;
 }
 
-/* Animaciones */
 @keyframes slideUpFade { 
     from { opacity: 0; transform: translateY(10px); } 
     to { opacity: 1; transform: translateY(0); } 
@@ -66,8 +71,8 @@ button, input, select, textarea { font-family: inherit; outline: none; border: n
     background: var(--bg-surface); 
     border-radius: var(--radius-md); 
     border: 1px solid var(--border-subtle); 
-    padding: 30px; 
-    width: 100%; /* Obliga a la tarjeta a expandirse */
+    padding: 20px; /* Reducido para móviles */
+    width: 100%; 
 }
 
 /* ====================================
@@ -75,7 +80,8 @@ button, input, select, textarea { font-family: inherit; outline: none; border: n
    ==================================== */
 .btn { 
     display: inline-flex; align-items: center; justify-content: center; 
-    padding: 10px 20px; border-radius: var(--radius-sm); 
+    padding: 12px 20px; /* Áreas táctiles más grandes para móvil */
+    border-radius: var(--radius-sm); 
     font-weight: 600; font-size: 0.95rem; cursor: pointer; 
     transition: all 0.2s var(--ease-smooth); gap: 8px; border: 1px solid transparent;
 }
@@ -89,9 +95,9 @@ button, input, select, textarea { font-family: inherit; outline: none; border: n
 
 .btn--full { width: 100%; }
 
-/* Botones de acción en tablas (Pequeños y elegantes) */
 .btn-action {
-    padding: 6px 12px; font-size: 0.8rem; font-weight: 600; border-radius: 6px;
+    padding: 8px 12px; /* Mejor área táctil */
+    font-size: 0.8rem; font-weight: 600; border-radius: 6px;
     display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
     border: 1px solid transparent; transition: all 0.2s;
 }
@@ -101,7 +107,7 @@ button, input, select, textarea { font-family: inherit; outline: none; border: n
 .btn-action--danger:hover { background: #ef4444; color: #fff; }
 
 /* ====================================
-   4. FORMULARIOS (Login)
+   4. FORMULARIOS
    ==================================== */
 .form { display: flex; flex-direction: column; gap: 20px; }
 .form__group { display: flex; flex-direction: column; gap: 8px; text-align: left; }
@@ -116,7 +122,13 @@ button, input, select, textarea { font-family: inherit; outline: none; border: n
 /* ====================================
    5. TABLAS DE DATOS GLOBALES
    ==================================== */
-.data-table { width: 100%; border-collapse: collapse; text-align: left; }
+/* Envoltorio para scroll horizontal en móviles */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.data-table { width: 100%; min-width: 600px; border-collapse: collapse; text-align: left; }
 .data-table th {
     background-color: var(--bg-app); color: var(--text-muted); font-weight: 600;
     padding: 16px; border-bottom: 1px solid var(--border-subtle);
@@ -131,21 +143,33 @@ button, input, select, textarea { font-family: inherit; outline: none; border: n
 .app-layout {
     display: flex;
     width: 100%;
-    height: 100%; /* Ocupa estrictamente el alto del #app-root */
-    overflow: hidden; /* Corta todo desborde */
+    height: 100%;
+    overflow: hidden;
     background-color: var(--bg-app);
+    position: relative; /* Necesario para el sidebar flotante */
 }
 
-/* --- SIDEBAR PERFECTO --- */
+/* --- SIDEBAR MOBILE (Flotante) --- */
 .app-sidebar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform: translateX(-100%); /* Oculto por defecto en móvil */
     width: 260px;
-    flex-shrink: 0; /* Prohíbe que se encoja */
+    height: 100%;
     background-color: var(--bg-app);
     border-right: 1px solid var(--border-subtle);
     display: flex;
     flex-direction: column;
     padding: 25px 20px;
-    z-index: 10;
+    z-index: 50;
+    transition: transform 0.3s var(--ease-smooth);
+    box-shadow: 5px 0 25px rgba(0,0,0,0.5);
+}
+
+/* Clase para abrir el sidebar mediante JS en móviles */
+.app-sidebar.is-open {
+    transform: translateX(0);
 }
 
 .sidebar-top { display: flex; flex-direction: column; gap: 8px; }
@@ -160,45 +184,101 @@ button, input, select, textarea { font-family: inherit; outline: none; border: n
 .nav-item:hover { background-color: var(--brand-faded); color: var(--brand-primary); }
 .nav-item.active { background-color: var(--brand-primary); color: #ffffff; }
 
-/* FIX: El botón de cerrar sesión ahora sí se queda abajo visible */
-.sidebar-bottom {
-    margin-top: auto; 
-    border-top: 1px solid var(--border-subtle);
-    padding-top: 15px;
-}
+.sidebar-bottom { margin-top: auto; border-top: 1px solid var(--border-subtle); padding-top: 15px; }
 .nav-logout { color: var(--danger) !important; }
 .nav-logout:hover { background: var(--danger-bg) !important; color: #fca5a5 !important; }
 
+/* Overlay oscuro para cuando el sidebar está abierto en móvil */
+.sidebar-overlay {
+    display: none;
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+    z-index: 40;
+}
+.sidebar-overlay.is-open { display: block; }
+
 /* --- MAIN CONTENT & TOPBAR --- */
 .app-main { 
-    flex: 1; /* Obliga a usar todo el espacio derecho */
+    flex: 1; 
     display: flex; 
     flex-direction: column; 
-    min-width: 0; /* Resuelve un bug crítico de flexbox que impedía encogerse/estirarse bien */
+    min-width: 0; 
 }
 
 .app-topbar {
-    height: 75px; flex-shrink: 0; background-color: var(--bg-app);
+    height: 60px; 
+    flex-shrink: 0; background-color: var(--bg-app);
     border-bottom: 1px solid var(--border-subtle);
-    display: flex; align-items: center; justify-content: space-between; padding: 0 40px;
+    display: flex; align-items: center; justify-content: space-between; 
+    padding: 0 20px; 
+    gap: 20px; /* 🔥 FIX: Esto crea una "barrera" invisible para que nunca se toquen */
 }
-.topbar-user { display: flex; align-items: center; gap: 15px; }
-.user-avatar {
-    width: 40px; height: 40px; border-radius: 50%; background-color: var(--brand-primary); 
-    color: white; display: flex; align-items: center; justify-content: center; font-weight: 700;
-}
-.user-info { display: flex; flex-direction: column; text-align: right; }
-.user-name { font-weight: 600; font-size: 0.9rem; }
-.user-role { font-size: 0.75rem; color: var(--brand-primary); font-weight: 700; text-transform: uppercase; }
 
-/* FIX: El área donde cargan las tablas ahora se expande al máximo */
+.btn-menu-toggle {
+    display: block; background: none; color: var(--text-main); font-size: 1.5rem; cursor: pointer;
+}
+
+.topbar-user { 
+    display: flex; align-items: center; gap: 12px; 
+    min-width: 0; /* 🔥 FIX: Permite que esta caja se encoja si es necesario */
+}
+
+.user-avatar {
+    width: 36px; height: 36px; border-radius: 50%; background-color: var(--brand-primary); 
+    color: white; display: flex; align-items: center; justify-content: center; font-weight: 700;
+    flex-shrink: 0; /* Evita que el círculo se vuelva un óvalo feo */
+}
+
+.user-info { 
+    display: flex; flex-direction: column; text-align: right; 
+    min-width: 0; /* 🔥 FIX: Magia negra de Flexbox para permitir el truncado */
+}
+
+.user-name { 
+    font-weight: 600; font-size: 0.85rem; 
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis; /* 🔥 FIX: Si el nombre es muy largo, pone "Andrés Santiago..." */
+    max-width: 200px; /* Límite de ancho para que no empuje el título */
+}
+
+.user-role { 
+    font-size: 0.7rem; color: var(--brand-primary); font-weight: 700; text-transform: uppercase; 
+}
 .app-content { 
     flex: 1; 
-    padding: 40px; 
-    overflow-y: auto; /* El único scroll de la aplicación vive aquí adentro */
+    padding: 20px; /* Reducido para móviles */
+    overflow-y: auto; 
     background-color: var(--bg-app); 
 }
-#main-content-area {
-    width: 100%;
-    max-width: 100%; /* Libertad total de expansión a la derecha */
+#main-content-area { width: 100%; max-width: 100%; }
+
+
+/* ====================================
+   7. MEDIA QUERIES (Desktop / Tablets Grandes)
+   ==================================== */
+@media (min-width: 1024px) {
+    /* Las tarjetas recuperan su padding original */
+    .card { padding: 30px; }
+
+    /* El sidebar vuelve a ser un bloque estático en la izquierda */
+    .app-sidebar {
+        position: relative;
+        transform: translateX(0);
+        box-shadow: none;
+        flex-shrink: 0;
+    }
+
+    /* Ocultamos elementos exclusivos de móvil */
+    .btn-menu-toggle { display: none; }
+    .sidebar-overlay { display: none !important; }
+
+    /* Restauramos los tamaños originales de Topbar y Content */
+    .app-topbar { height: 75px; padding: 0 40px; }
+    .app-content { padding: 40px; }
+    .user-avatar { width: 40px; height: 40px; }
+    .user-name { font-size: 0.9rem; }
+    .user-role { font-size: 0.75rem; }
 }
