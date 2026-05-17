@@ -335,7 +335,41 @@ export class InstructorView {
         };
 
         container.innerHTML = list.map(task => {
-            const done = task.status === 'completada';
+            // Estados finales: completada (aprobada) o incompleta (rechazada)
+            const isApproved = task.status === 'completada';
+            const isRejected = task.status === 'incompleta';
+            const isFinal    = isApproved || isRejected;
+
+            // Botón principal izquierdo:
+            //   - Si está rechazada → "Reabrir" (verde apagado/primary)
+            //   - Si está aprobada  → "Reabrir" (verde apagado/primary)
+            //   - Si está en otro estado → "Aprobar" (verde)
+            //   - El botón Aprobar queda deshabilitado si ya fue rechazada
+            const approveDisabled = isRejected ? 'style="opacity:.4;pointer-events:none;" disabled' : '';
+            const approveBtn = isFinal
+                ? `<button class="btn-action btn-action--primary btn-reopen"
+                       data-id="${task.id}" data-user-id="${task.userId}">
+                       <i class="ph ph-arrow-counter-clockwise"></i> Reabrir
+                   </button>`
+                : `<button class="btn-action btn-action--success btn-approve"
+                       data-id="${task.id}" data-user-id="${task.userId}" ${approveDisabled}>
+                       <i class="ph ph-check-circle"></i> Aprobar
+                   </button>`;
+
+            // Botón rechazar:
+            //   - Si ya fue rechazada → "Reabrir" (mismo comportamiento que arriba, pero este eje)
+            //     En este diseño, cuando está rechazada aparece UN solo "Reabrir" y el
+            //     botón Rechazar se deshabilita igual que el Aprobar.
+            //   - Si ya fue aprobada → también se deshabilita
+            const rejectDisabled = isFinal ? 'style="opacity:.4;pointer-events:none;" disabled' : '';
+            const rejectBtn = `<button class="btn-action btn-action--danger btn-reject"
+                       data-id="${task.id}"
+                       data-user-id="${task.userId}"
+                       data-desc="${(task.description || '').replace(/"/g, '&quot;')}"
+                       ${rejectDisabled}>
+                       <i class="ph ph-x-circle"></i> Rechazar
+                   </button>`;
+
             return `
             <div style="padding:16px;border:1px solid var(--border-subtle);
                 border-radius:var(--radius-sm);margin-bottom:12px;background:var(--bg-app);">
@@ -351,18 +385,8 @@ export class InstructorView {
                 </p>
                 <div style="display:flex;gap:7px;flex-wrap:wrap;
                     border-top:1px solid var(--border-subtle);padding-top:12px;">
-                    <button class="btn-action ${done ? 'btn-action--primary btn-reopen' : 'btn-action--success btn-approve'}"
-                        data-id="${task.id}" data-done="${done}">
-                        ${done
-                            ? '<i class="ph ph-arrow-counter-clockwise"></i> Reabrir'
-                            : '<i class="ph ph-check-circle"></i> Aprobar'}
-                    </button>
-                    <button class="btn-action btn-action--danger btn-reject"
-                        data-id="${task.id}"
-                        data-desc="${(task.description || '').replace(/"/g, '&quot;')}"
-                        ${task.status === 'incompleta' ? 'style="opacity:.4;pointer-events:none;"' : ''}>
-                        <i class="ph ph-x-circle"></i> Rechazar
-                    </button>
+                    ${approveBtn}
+                    ${rejectBtn}
                     <div style="flex:1;min-width:0;"></div>
                     <button class="btn-action btn-action--primary btn-edit-task"
                         data-id="${task.id}"
@@ -381,18 +405,29 @@ export class InstructorView {
     }
 
     _bindTaskItemEvents() {
-        // ── APROBAR / REABRIR (toggle según data-done) ────────────────────────
-        document.querySelectorAll('.btn-approve, .btn-reopen').forEach(btn => {
+        // ── APROBAR ───────────────────────────────────────────────────────────
+        document.querySelectorAll('.btn-approve').forEach(btn => {
             btn.addEventListener('click', async e => {
-                const id   = e.currentTarget.getAttribute('data-id');
-                const done = e.currentTarget.getAttribute('data-done') === 'true';
-                // done=true → estaba aprobada → reabrir a 'en progreso'
-                // done=false → no aprobada → aprobar como 'completada'
+                const id     = e.currentTarget.getAttribute('data-id');
+                const userId = e.currentTarget.getAttribute('data-user-id');
                 try {
-                    await tasksService.updateTask(id, { status: done ? 'en progreso' : 'completada' });
-                    toast.success(done ? 'Tarea reabierta' : 'Tarea aprobada');
+                    await tasksService.updateTask(id, { status: 'completada' }, userId);
+                    toast.success('Tarea aprobada');
                     await this._reloadRefresh();
-                } catch { toast.error('Error al actualizar la tarea'); }
+                } catch { toast.error('Error al aprobar la tarea'); }
+            });
+        });
+
+        // ── REABRIR (aparece cuando la tarea ya tiene estado final) ───────────
+        document.querySelectorAll('.btn-reopen').forEach(btn => {
+            btn.addEventListener('click', async e => {
+                const id     = e.currentTarget.getAttribute('data-id');
+                const userId = e.currentTarget.getAttribute('data-user-id');
+                try {
+                    await tasksService.updateTask(id, { status: 'en progreso' }, userId);
+                    toast.success('Tarea reabierta');
+                    await this._reloadRefresh();
+                } catch { toast.error('Error al reabrir la tarea'); }
             });
         });
 
@@ -401,6 +436,7 @@ export class InstructorView {
             btn.addEventListener('click', async e => {
                 const id      = e.currentTarget.getAttribute('data-id');
                 const oldDesc = e.currentTarget.getAttribute('data-desc');
+                const userId  = e.currentTarget.getAttribute('data-user-id');
                 const { value: reason } = await Swal.fire({
                     title: 'Rechazar Tarea',
                     input: 'textarea',
@@ -416,7 +452,7 @@ export class InstructorView {
                     await tasksService.updateTask(id, {
                         status:      'incompleta',
                         description: `${oldDesc}\n\n⚠️ REVISIÓN DEL INSTRUCTOR:\n${reason}`,
-                    });
+                    }, userId);
                     toast.success('Tarea rechazada');
                     await this._reloadRefresh();
                 } catch { toast.error('Error al rechazar'); }

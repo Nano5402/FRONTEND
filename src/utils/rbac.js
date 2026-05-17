@@ -48,11 +48,12 @@ export function getDecoded() {
     const token = storage.getAccessToken();
     if (!token) return null;
     try {
-        // atob() decodifica Base64
-        // escape/decodeURIComponent maneja caracteres especiales (tildes, ñ)
-        return JSON.parse(decodeURIComponent(escape(atob(token.split('.')[1]))));
+        // Reemplazamos escape/decodeURIComponent por atob directo
+        // que es más robusto y no usa APIs deprecadas
+        const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+        return JSON.parse(atob(base64));
     } catch {
-        return null; // token malformado
+        return null;
     }
 }
 

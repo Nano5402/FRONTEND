@@ -175,21 +175,28 @@ export function renderSidebar(activeRoute = '/dashboard', onNavigate = null) {
                     .forEach(el => el.classList.remove('active'));
                 item.classList.add('active');
 
-                if (onNavigate) {
-                    // MODO INTERNO: el dashboard tiene navegación propia
-                    // No cambiamos la URL — solo le decimos al dashboard qué mostrar
-                    // Mapeamos la ruta al nombre de vista que entiende el dashboard
-                    const map = {
-                        '/dashboard': 'dashboard',
-                        '/users':     'users',
-                        '/roles':     'roles',
-                    };
-                    onNavigate(map[route] || 'dashboard');
-                } else {
-                    // MODO EXTERNO: navegamos con el router (cambia el hash)
-                    // Usado por StudentView y AuditorView que no tienen sub-vistas
-                    router.navigate(route);
-                }
+        if (onNavigate) {
+         // MODO INTERNO: el dashboard tiene navegación propia.
+         // Actualizamos el hash de la URL Y llamamos al dashboard.
+         // Así la URL refleja en qué sección está el usuario y
+         // compartir el link o recargar lleva a la sección correcta.
+            const map = {
+        '/dashboard': 'dashboard',
+        '/users':     'users',
+        '/roles':     'roles',
+    };
+
+            // Actualizamos el hash SIN disparar hashchange (replaceState)
+            // para que el router no re-monte el dashboard desde cero
+         history.replaceState(null, '', `#${route}`);
+
+         // Luego le decimos al dashboard qué contenido mostrar
+         onNavigate(map[route] || 'dashboard');
+}       else {
+            // MODO EXTERNO: navegamos con el router (cambia el hash)
+         // Usado por StudentView y AuditorView que no tienen sub-vistas
+         router.navigate(route);
+}
             });
         });
     }

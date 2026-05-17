@@ -135,25 +135,22 @@ router.register('/dashboard', async () => {
     return null; // null porque la vista maneja su propio innerHTML
 }, guardAuth());
 
-// PASO 3A: Ruta /users — Gestión de usuarios (solo admin/instructor con permiso)
-// Si el usuario recarga en /#/users, se re-monta el dashboard y navega a esa vista
+// DESPUÉS — le pasa initialView directamente al mount()
+// El AdminView ya sabe desde el principio qué sección mostrar
+// y el sidebar arranca con el ítem correcto marcado activo
 router.register('/users', async () => {
     document.getElementById(ROOT).innerHTML = '';
     const view = _pickDashboard();
-    await view.mount();
-    view.navigateTo('users'); // le dice al dashboard que muestre la vista de usuarios
+    await view.mount('users'); // ← initialView directo
     return null;
 }, guardAuth());
 
-// PASO 3B: Ruta /roles — Seguridad y Roles (solo SuperAdmin)
 router.register('/roles', async () => {
     document.getElementById(ROOT).innerHTML = '';
     const view = _pickDashboard();
-    await view.mount();
-    view.navigateTo('roles');
+    await view.mount('roles'); // ← initialView directo
     return null;
 }, guardAuth());
-
 // ── PÁGINA 404 ────────────────────────────────────────────────────────────────
 // Se muestra cuando el usuario escribe una ruta que no existe
 router.setNotFound(() => `

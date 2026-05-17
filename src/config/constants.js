@@ -23,7 +23,7 @@
  * ⚠️ Si el backend y el frontend corren en la misma máquina → usa localhost
  * ⚠️ Si están en máquinas diferentes de la misma red → usa la IP local
  */
-export const API_URL = 'http://10.5.225.153:3000/api';
+export const API_URL = 'http://localhost:3000/api';
 
 /**
  * PERMISSIONS — Permisos atómicos del sistema RBAC.

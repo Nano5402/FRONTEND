@@ -100,19 +100,59 @@ export async function createTask(title, description, userIds) {
 }
 
 /**
- * updateTask(id, fields)
- * Actualiza una tarea de forma inteligente:
- * - Solo { status } → PATCH /tasks/:id/status (más eficiente)
- * - Otros campos    → PUT /tasks/:id (actualización completa)
+ * updateTask(id, fields, targetUserId?)
+ * Actualiza una tarea de forma inteligente según los campos recibidos:
+ *
+ *  { status, description } + targetUserId → dos llamadas separadas (rechazo instructor):
+ *                                           PATCH status en user_tasks + PUT description en tasks
+ *  { status }              + targetUserId → PATCH /:id/users/:uid/status (aprobar/reabrir)
+ *  { status }              sin userId     → PATCH /:id/status            (estudiante autogestiona)
+ *  { title, description }               → PUT /:id                      (edición general)
+ *
+ * NOTA: el rechazo requiere DOS peticiones porque status vive en user_tasks
+ * y description vive en tasks — son tablas distintas sin una sola ruta que
+ * actualice ambas a la vez.
  */
-export async function updateTask(id, fields) {
-    if (fields.status && Object.keys(fields).length === 1) {
+export async function updateTask(id, fields, targetUserId = null) {
+    const keys = Object.keys(fields);
+
+    // ── CASO 1: Rechazo del instructor → status + description + targetUserId ──
+    // El instructor rechaza una tarea: actualiza el estado en user_tasks Y
+    // agrega su nota al campo description en tasks. Son tablas distintas,
+    // por eso se necesitan dos peticiones en secuencia.
+    if (fields.status && fields.description !== undefined && targetUserId) {
+        // Petición 1: cambiar el status de la asignación del estudiante en user_tasks
+        await senaFetch(`${API_URL}/tasks/${id}/users/${targetUserId}/status`, {
+            method: 'PATCH',
+            body:   JSON.stringify({ status: fields.status }),
+        });
+        // Petición 2: guardar la nota del instructor en la descripción de la tarea
+        const res = await senaFetch(`${API_URL}/tasks/${id}`, {
+            method: 'PUT',
+            body:   JSON.stringify({ description: fields.description }),
+        });
+        return res.json();
+    }
+
+    // ── CASO 2: Solo status + targetUserId → instructor aprueba o reabre ──────
+    if (fields.status && keys.length === 1 && targetUserId) {
+        const res = await senaFetch(`${API_URL}/tasks/${id}/users/${targetUserId}/status`, {
+            method: 'PATCH',
+            body:   JSON.stringify({ status: fields.status }),
+        });
+        return res.json();
+    }
+
+    // ── CASO 3: Solo status sin userId → estudiante autogestiona la suya ──────
+    if (fields.status && keys.length === 1) {
         const res = await senaFetch(`${API_URL}/tasks/${id}/status`, {
             method: 'PATCH',
             body:   JSON.stringify({ status: fields.status }),
         });
         return res.json();
     }
+
+    // ── CASO 4: title y/o description → edición general de la tarea ──────────
     const res = await senaFetch(`${API_URL}/tasks/${id}`, {
         method: 'PUT',
         body:   JSON.stringify(fields),
